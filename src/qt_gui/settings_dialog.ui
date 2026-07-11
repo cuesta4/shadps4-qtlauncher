@@ -2444,6 +2444,18 @@
                    </widget>
                   </item>
                  </layout>
+               </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="hddReadSpeedGroupBox">
+                 <property name="title">
+                  <string>HDD Read Speed</string>
+                 </property>
+                 <layout class="QVBoxLayout" name="hddReadSpeedLayout">
+                  <item>
+                   <widget class="QComboBox" name="hddReadSpeedComboBox"/>
+                  </item>
+                 </layout>
                 </widget>
                </item>
                <item>

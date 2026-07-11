@@ -2318,6 +2318,10 @@ Please install Rosetta 2 from Terminal using &apos;softwareupdate --install-rose
         <translation>Guest Debug Markers</translation>
     </message>
     <message>
+        <source>HDD Read Speed</source>
+        <translation>HDD Read Speed</translation>
+    </message>
+    <message>
         <source>Enable Readback Linear Images</source>
         <translation>Enable Readback Linear Images</translation>
     </message>
@@ -2396,6 +2400,18 @@ Please install Rosetta 2 from Terminal using &apos;softwareupdate --install-rose
     <message>
         <source>Point your mouse at an option to display its description.</source>
         <translation>Point your mouse at an option to display its description.</translation>
+    </message>
+    <message>
+        <source>75 MiB/s</source>
+        <translation>75 MiB/s</translation>
+    </message>
+    <message>
+        <source>100 MiB/s</source>
+        <translation>100 MiB/s</translation>
+    </message>
+    <message>
+        <source>125 MiB/s</source>
+        <translation>125 MiB/s</translation>
     </message>
     <message>
         <source>Console Language:\nSets the language that the PS4 game uses.\nIt&apos;s recommended to set this to a language the game supports, which will vary by region.</source>
@@ -2492,6 +2508,10 @@ Please install Rosetta 2 from Terminal using &apos;softwareupdate --install-rose
     <message>
         <source>Collect Shaders:\nYou need this enabled to edit shaders with the debug menu (Ctrl + F10).</source>
         <translation>Collect Shaders:\nYou need this enabled to edit shaders with the debug menu (Ctrl + F10).</translation>
+    </message>
+    <message>
+        <source>simulates the PS4&apos;s HDD speeds for compatibility</source>
+        <translation>simulates the PS4&apos;s HDD speeds for compatibility</translation>
     </message>
     <message>
         <source>Enable Readback Linear Images:\nEnables async downloading of GPU modified linear images.\nMight fix issues in some games.</source>

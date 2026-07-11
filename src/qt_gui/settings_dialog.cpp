@@ -132,6 +132,10 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
       gs_serial(gsc_serial) {
 
     ui->setupUi(this);
+    ui->hddReadSpeedComboBox->addItem(tr("Disabled"), 0U);
+    ui->hddReadSpeedComboBox->addItem(tr("75 MiB/s"), 75U);
+    ui->hddReadSpeedComboBox->addItem(tr("100 MiB/s"), 100U);
+    ui->hddReadSpeedComboBox->addItem(tr("125 MiB/s"), 125U);
     ui->tabWidgetSettings->setUsesScrollButtons(false);
     GetPhysicalDevices();
 
@@ -602,6 +606,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
 
         // Experimental
         ui->readbacksGroupBox->installEventFilter(this);
+        ui->hddReadSpeedGroupBox->installEventFilter(this);
         ui->readbackLinearImagesCheckBox->installEventFilter(this);
         ui->dumpShadersCheckBox->installEventFilter(this);
         ui->dmaCheckBox->installEventFilter(this);
@@ -715,6 +720,9 @@ void SettingsDialog::LoadValuesFromConfig() {
         languageIndexes.size());
 
     ui->readbacksModeComboBox->setCurrentIndex(EmulatorSettings.GetReadbacksMode());
+    const int hdd_read_speed_index =
+        ui->hddReadSpeedComboBox->findData(EmulatorSettings.GetApp0ReadBandwidthMiBps());
+    ui->hddReadSpeedComboBox->setCurrentIndex(std::max(hdd_read_speed_index, 0));
     ui->readbackLinearImagesCheckBox->setChecked(EmulatorSettings.IsReadbackLinearImagesEnabled());
     ui->dmaCheckBox->setChecked(EmulatorSettings.IsDirectMemoryAccessEnabled());
     ui->neoCheckBox->setChecked(EmulatorSettings.IsNeo());
@@ -1084,6 +1092,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("shadNet:\\nCompatibility is very limited at the moment.\\nYou can register at https://www.shadps4.net/shadnet/register/.");
     } else if (elementName == "readbacksGroupBox") {
         text = tr("Readbacks:\\nEnable GPU memory readbacks and writebacks.\\nThis is required for proper behavior in some games.\\nMight cause stability and/or performance issues.");
+    } else if (elementName == "hddReadSpeedGroupBox") {
+        text = tr("simulates the PS4's HDD speeds for compatibility");
     } else if (elementName == "readbackLinearImagesCheckBox") {
         text = tr("Enable Readback Linear Images:\\nEnables async downloading of GPU modified linear images.\\nMight fix issues in some games.");
     } else if (elementName == "dmemGroupBox") {
@@ -1112,6 +1122,8 @@ bool SettingsDialog::eventFilter(QObject* obj, QEvent* event) {
 
 void SettingsDialog::UpdateSettings(bool is_specific) {
     EmulatorSettings.SetReadbacksMode(ui->readbacksModeComboBox->currentIndex(), is_specific);
+    EmulatorSettings.SetApp0ReadBandwidthMiBps(ui->hddReadSpeedComboBox->currentData().toUInt(),
+                                               is_specific);
     EmulatorSettings.SetReadbackLinearImagesEnabled(ui->readbackLinearImagesCheckBox->isChecked(),
                                                     is_specific);
     EmulatorSettings.SetDirectMemoryAccessEnabled(ui->dmaCheckBox->isChecked(), is_specific);
