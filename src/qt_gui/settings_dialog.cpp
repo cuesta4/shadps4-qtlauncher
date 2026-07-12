@@ -159,9 +159,13 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         ui->tabWidgetSettings->setTabVisible(1, false);
         ui->chooseHomeTabComboBox->removeItem(1);
 
+        // Keep network emulation settings isolated in their own per-game page.
+        ui->shadnetPageLayout->insertWidget(0, ui->shadnetGroupBox);
+
     } else {
         // Experimental tab
         ui->tabWidgetSettings->setTabVisible(8, false);
+        ui->tabWidgetSettings->setTabVisible(9, false);
         ui->chooseHomeTabComboBox->removeItem(8);
     }
 
@@ -607,6 +611,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         // Experimental
         ui->readbacksGroupBox->installEventFilter(this);
         ui->hddReadSpeedGroupBox->installEventFilter(this);
+        ui->fastPathCheckBox->installEventFilter(this);
         ui->readbackLinearImagesCheckBox->installEventFilter(this);
         ui->dumpShadersCheckBox->installEventFilter(this);
         ui->dmaCheckBox->installEventFilter(this);
@@ -725,6 +730,7 @@ void SettingsDialog::LoadValuesFromConfig() {
     ui->hddReadSpeedComboBox->setCurrentIndex(std::max(hdd_read_speed_index, 0));
     ui->readbackLinearImagesCheckBox->setChecked(EmulatorSettings.IsReadbackLinearImagesEnabled());
     ui->dmaCheckBox->setChecked(EmulatorSettings.IsDirectMemoryAccessEnabled());
+    ui->fastPathCheckBox->setChecked(EmulatorSettings.IsHighDrawCallOptimization());
     ui->neoCheckBox->setChecked(EmulatorSettings.IsNeo());
     ui->devkitCheckBox->setChecked(EmulatorSettings.IsDevKit());
     ui->networkConnectedCheckBox->setChecked(EmulatorSettings.IsConnectedToNetwork());
@@ -1094,6 +1100,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Readbacks:\\nEnable GPU memory readbacks and writebacks.\\nThis is required for proper behavior in some games.\\nMight cause stability and/or performance issues.");
     } else if (elementName == "hddReadSpeedGroupBox") {
         text = tr("simulates the PS4's HDD speeds for compatibility");
+    } else if (elementName == "fastPathCheckBox") {
+        text = tr("High Draw-Call Fast Path:\\nReduces CPU overhead in games with very high draw-call counts.\\nThis is an experimental per-game optimization and requires restarting the game.");
     } else if (elementName == "readbackLinearImagesCheckBox") {
         text = tr("Enable Readback Linear Images:\\nEnables async downloading of GPU modified linear images.\\nMight fix issues in some games.");
     } else if (elementName == "dmemGroupBox") {
@@ -1127,6 +1135,8 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
     EmulatorSettings.SetReadbackLinearImagesEnabled(ui->readbackLinearImagesCheckBox->isChecked(),
                                                     is_specific);
     EmulatorSettings.SetDirectMemoryAccessEnabled(ui->dmaCheckBox->isChecked(), is_specific);
+    EmulatorSettings.SetHighDrawCallOptimization(ui->fastPathCheckBox->isChecked(),
+                                                 is_specific);
     EmulatorSettings.SetDevKit(ui->devkitCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetNeo(ui->neoCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetConnectedToNetwork(ui->networkConnectedCheckBox->isChecked(), is_specific);
