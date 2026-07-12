@@ -1,13 +1,11 @@
 // SPDX-FileCopyrightText: Copyright 2025 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "winresrc.h"
-
 #define xstr(s) str(s)
 #define str(s) #s
 
-// NEUTRAL LANG
-LANGUAGE LANG_NEUTRAL, 0x8
+// English (United States), matching the 0409 StringFileInfo block below.
+LANGUAGE 0x09, 0x01
 
 // ICON
 IDI_ICON1 ICON "images/shadps4.ico"
