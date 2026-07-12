@@ -309,12 +309,31 @@ bool EmulatorSettingsImpl::Save(const std::string& serial) {
             SaveGroupGameSpecific(m_vulkan, vulkanObj);
             j["Vulkan"] = vulkanObj;
 
+            // Preserve settings introduced by newer backend builds. The launcher owns only the
+            // keys in its schema and must not erase unknown per-game overrides when saving.
+            json existing = json::object();
+            if (std::ifstream existingIn{path}; existingIn.good()) {
+                try {
+                    existingIn >> existing;
+                } catch (...) {
+                    existing = json::object();
+                }
+            }
+            for (auto& [section, value] : j.items()) {
+                if (existing.contains(section) && existing[section].is_object() &&
+                    value.is_object()) {
+                    existing[section].update(value);
+                } else {
+                    existing[section] = value;
+                }
+            }
+
             std::ofstream out(path);
             if (!out) {
                 LOG_ERROR(Config, "Failed to open game config for writing: {}", path.string());
                 return false;
             }
-            out << std::setw(2) << j;
+            out << std::setw(2) << existing;
             return !out.fail();
 
         } else {

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2025-2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <AL/al.h>
@@ -36,6 +37,13 @@
 #endif
 
 // extern std::unique_ptr<Vulkan::Presenter> presenter;
+
+constexpr u32 NormalizeHddReadBandwidth(u32 bandwidth_mibps) {
+    if (bandwidth_mibps == 0 || bandwidth_mibps > 200) {
+        return 0;
+    }
+    return std::max(bandwidth_mibps, 50u);
+}
 
 QStringList languageNames = {"Arabic",
                              "Czech",
@@ -132,10 +140,6 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
       gs_serial(gsc_serial) {
 
     ui->setupUi(this);
-    ui->hddReadSpeedComboBox->addItem(tr("Disabled"), 0U);
-    ui->hddReadSpeedComboBox->addItem(tr("75 MiB/s"), 75U);
-    ui->hddReadSpeedComboBox->addItem(tr("100 MiB/s"), 100U);
-    ui->hddReadSpeedComboBox->addItem(tr("125 MiB/s"), 125U);
     ui->tabWidgetSettings->setUsesScrollButtons(false);
     GetPhysicalDevices();
 
@@ -725,9 +729,8 @@ void SettingsDialog::LoadValuesFromConfig() {
         languageIndexes.size());
 
     ui->readbacksModeComboBox->setCurrentIndex(EmulatorSettings.GetReadbacksMode());
-    const int hdd_read_speed_index =
-        ui->hddReadSpeedComboBox->findData(EmulatorSettings.GetApp0ReadBandwidthMiBps());
-    ui->hddReadSpeedComboBox->setCurrentIndex(std::max(hdd_read_speed_index, 0));
+    ui->hddReadSpeedSpinBox->setValue(
+        NormalizeHddReadBandwidth(EmulatorSettings.GetApp0ReadBandwidthMiBps()));
     ui->readbackLinearImagesCheckBox->setChecked(EmulatorSettings.IsReadbackLinearImagesEnabled());
     ui->dmaCheckBox->setChecked(EmulatorSettings.IsDirectMemoryAccessEnabled());
     ui->fastPathCheckBox->setChecked(EmulatorSettings.IsHighDrawCallOptimization());
@@ -1099,7 +1102,9 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "readbacksGroupBox") {
         text = tr("Readbacks:\\nEnable GPU memory readbacks and writebacks.\\nThis is required for proper behavior in some games.\\nMight cause stability and/or performance issues.");
     } else if (elementName == "hddReadSpeedGroupBox") {
-        text = tr("simulates the PS4's HDD speeds for compatibility");
+        text = tr("Simulates the PS4's HDD read speed for compatibility.\n"
+                  "Enter a custom bandwidth in MiB/s. Values from 1 to 49 are automatically "
+                  "raised to 50 MiB/s.\n0 and values above 200 use unlimited/native speed.");
     } else if (elementName == "fastPathCheckBox") {
         text = tr("High Draw-Call Fast Path:\\nReduces CPU overhead in games with very high draw-call counts.\\nThis is an experimental per-game optimization and requires restarting the game.");
     } else if (elementName == "readbackLinearImagesCheckBox") {
@@ -1130,8 +1135,10 @@ bool SettingsDialog::eventFilter(QObject* obj, QEvent* event) {
 
 void SettingsDialog::UpdateSettings(bool is_specific) {
     EmulatorSettings.SetReadbacksMode(ui->readbacksModeComboBox->currentIndex(), is_specific);
-    EmulatorSettings.SetApp0ReadBandwidthMiBps(ui->hddReadSpeedComboBox->currentData().toUInt(),
-                                               is_specific);
+    const u32 hdd_read_bandwidth =
+        NormalizeHddReadBandwidth(static_cast<u32>(ui->hddReadSpeedSpinBox->value()));
+    ui->hddReadSpeedSpinBox->setValue(static_cast<int>(hdd_read_bandwidth));
+    EmulatorSettings.SetApp0ReadBandwidthMiBps(hdd_read_bandwidth, is_specific);
     EmulatorSettings.SetReadbackLinearImagesEnabled(ui->readbackLinearImagesCheckBox->isChecked(),
                                                     is_specific);
     EmulatorSettings.SetDirectMemoryAccessEnabled(ui->dmaCheckBox->isChecked(), is_specific);

@@ -2608,7 +2608,16 @@
                  <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
                  <layout class="QVBoxLayout" name="hddReadSpeedLayout">
                   <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                 <item><widget class="QComboBox" name="hddReadSpeedComboBox"/></item>
+                 <item>
+                  <widget class="QSpinBox" name="hddReadSpeedSpinBox">
+                   <property name="accelerated"><bool>true</bool></property>
+                   <property name="correctionMode"><enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum></property>
+                   <property name="keyboardTracking"><bool>false</bool></property>
+                   <property name="specialValueText"><string>Unlimited</string></property>
+                   <property name="suffix"><string notr="true"> MiB/s</string></property>
+                   <property name="maximum"><number>100000</number></property>
+                  </widget>
+                 </item>
                 </layout>
                </widget>
               </item>
