@@ -1,8 +1,13 @@
 // SPDX-FileCopyrightText: Copyright 2024-2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
+#include <stdexcept>
 #include <unordered_map>
+#include <utility>
+
 #include "common/logging/log.h"
 #include "common/path_util.h"
 #include "common/types.h"
@@ -82,90 +87,52 @@ static std::optional<std::filesystem::path> GetBundleParentDirectory() {
 }
 #endif
 
-static auto UserPaths = [] {
-#if defined(__APPLE__)
-    // Set the current path to the directory containing the app bundle.
-    if (const auto bundle_dir = GetBundleParentDirectory()) {
-        std::filesystem::current_path(*bundle_dir);
-    }
-#endif
+namespace {
 
-    // Try the portable launcher directory first.
-    auto user_dir = std::filesystem::current_path() / PORTABLE_DIR;
-    if (!std::filesystem::exists(user_dir)) {
-        // If it doesn't exist, use the standard path for the platform instead.
-        // NOTE: On Windows we currently just create the portable directory instead.
+std::unordered_map<PathType, fs::path> user_paths;
+fs::path application_directory;
+fs::path standard_user_directory;
+bool standard_user_directory_existed{};
+bool user_paths_initialized{};
+
+std::pair<fs::path, fs::path> GetStandardDirectories() {
 #ifdef __APPLE__
-        user_dir =
-            std::filesystem::path(getenv("HOME")) / "Library" / "Application Support" / "shadPS4";
+    const auto app_support = fs::path{getenv("HOME")} / "Library" / "Application Support";
+    return {app_support / "shadPS4", app_support / "shadPS4QtLauncher"};
 #elif defined(__linux__)
-        const char* xdg_data_home = getenv("XDG_DATA_HOME");
-        if (xdg_data_home != nullptr && strlen(xdg_data_home) > 0) {
-            user_dir = std::filesystem::path(xdg_data_home) / "shadPS4";
-        } else {
-            user_dir = std::filesystem::path(getenv("HOME")) / ".local" / "share" / "shadPS4";
-        }
+    const char* xdg_data_home = getenv("XDG_DATA_HOME");
+    const auto data_home = xdg_data_home != nullptr && strlen(xdg_data_home) > 0
+                               ? fs::path{xdg_data_home}
+                               : fs::path{getenv("HOME")} / ".local" / "share";
+    return {data_home / "shadPS4", data_home / "shadPS4QtLauncher"};
 #elif _WIN32
-        TCHAR appdata[MAX_PATH] = {0};
-        SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appdata);
-        user_dir = std::filesystem::path(appdata) / "shadPS4";
-#endif
+    TCHAR appdata[MAX_PATH]{};
+    if (SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appdata) != S_OK) {
+        throw std::runtime_error("Unable to resolve the AppData directory");
     }
-
-    // Try the portable user directory first.
-    auto launcher_dir = std::filesystem::current_path() / PORTABLE_LAUNCHER_DIR;
-    if (!std::filesystem::exists(launcher_dir)) {
-        // If it doesn't exist, use the standard path for the platform instead.
-        // NOTE: On Windows we currently just create the portable directory instead.
-#ifdef __APPLE__
-        launcher_dir = std::filesystem::path(getenv("HOME")) / "Library" / "Application Support" /
-                       "shadPS4QtLauncher";
-#elif defined(__linux__)
-        const char* xdg_data_home = getenv("XDG_DATA_HOME");
-        if (xdg_data_home != nullptr && strlen(xdg_data_home) > 0) {
-            launcher_dir = std::filesystem::path(xdg_data_home) / "shadPS4QtLauncher";
-        } else {
-            launcher_dir =
-                std::filesystem::path(getenv("HOME")) / ".local" / "share" / "shadPS4QtLauncher";
-        }
-#elif _WIN32
-        TCHAR appdata[MAX_PATH] = {0};
-        SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appdata);
-        launcher_dir = std::filesystem::path(appdata) / "shadPS4QtLauncher";
+    const fs::path appdata_path{appdata};
+    return {appdata_path / "shadPS4", appdata_path / "shadPS4QtLauncher"};
 #endif
-    }
+}
 
-    std::unordered_map<PathType, fs::path> paths;
-
-    const auto create_path = [&](PathType shad_path, const fs::path& new_path) {
-        std::filesystem::create_directories(new_path);
-        paths.insert_or_assign(shad_path, new_path);
+void CreateLauncherPaths(const fs::path& launcher_dir) {
+    const auto create_path = [](PathType shad_path, const fs::path& new_path) {
+        fs::create_directories(new_path);
+        user_paths.insert_or_assign(shad_path, new_path);
     };
-
-    create_path(PathType::UserDir, user_dir);
-    create_path(PathType::LogDir, user_dir / LOG_DIR);
-    create_path(PathType::ScreenshotsDir, user_dir / SCREENSHOTS_DIR);
-    create_path(PathType::ShaderDir, user_dir / SHADER_DIR);
-    create_path(PathType::GameDataDir, user_dir / GAMEDATA_DIR);
-    create_path(PathType::TempDataDir, user_dir / TEMPDATA_DIR);
-    create_path(PathType::SysModuleDir, user_dir / SYSMODULES_DIR);
-    create_path(PathType::DownloadDir, user_dir / DOWNLOAD_DIR);
-    create_path(PathType::CapturesDir, user_dir / CAPTURES_DIR);
-    create_path(PathType::CheatsDir, user_dir / CHEATS_DIR);
-    create_path(PathType::PatchesDir, user_dir / PATCHES_DIR);
-    create_path(PathType::MetaDataDir, user_dir / METADATA_DIR);
-    create_path(PathType::CustomTrophy, user_dir / CUSTOM_TROPHY);
-    create_path(PathType::CustomConfigs, user_dir / CUSTOM_CONFIGS);
-    create_path(PathType::CacheDir, user_dir / CACHE_DIR);
-    create_path(PathType::FontsDir, user_dir / FONTS_DIR);
-    create_path(PathType::HomeDir, user_dir / HOME_DIR);
-    create_path(PathType::TrophyDir, user_dir / TROPHY_DIR);
 
     create_path(PathType::LauncherDir, launcher_dir);
     create_path(PathType::LauncherMetaData, launcher_dir / METADATA_DIR);
     create_path(PathType::VersionDir, launcher_dir / VERSION_DIR);
+}
 
-    std::ofstream notice_file(user_dir / CUSTOM_TROPHY / "Notice.txt");
+void CreateTrophyNotice(const fs::path& user_dir) {
+    const auto notice_path = user_dir / CUSTOM_TROPHY / "Notice.txt";
+    if (fs::exists(notice_path)) {
+        return;
+    }
+
+    std::ofstream notice_file(notice_path);
     if (notice_file.is_open()) {
         notice_file
             // clang-format off
@@ -189,9 +156,103 @@ static auto UserPaths = [] {
         // clang-format on
         notice_file.close();
     }
+}
 
-    return paths;
-}();
+} // namespace
+
+void InitializeUserPaths(const fs::path& app_dir) {
+    if (user_paths_initialized) {
+        return;
+    }
+    if (app_dir.empty()) {
+        throw std::runtime_error("The launcher application directory is empty");
+    }
+
+    application_directory = fs::absolute(app_dir).lexically_normal();
+#if defined(__APPLE__)
+    if (const auto bundle_dir = GetBundleParentDirectory()) {
+        application_directory = *bundle_dir;
+        fs::current_path(*bundle_dir);
+    }
+#endif
+
+    if (!fs::is_directory(application_directory)) {
+        throw std::runtime_error("The launcher application directory is invalid");
+    }
+
+    auto [platform_user_directory, platform_launcher_directory] = GetStandardDirectories();
+    standard_user_directory = std::move(platform_user_directory);
+
+    std::error_code exists_error;
+    standard_user_directory_existed = fs::exists(standard_user_directory, exists_error);
+    if (exists_error) {
+        // Treat an unreadable path as pre-existing so cleanup can never happen automatically.
+        standard_user_directory_existed = true;
+    }
+
+    const auto portable_user_directory = GetPortableUserDirectory();
+    const auto portable_launcher_directory = application_directory / PORTABLE_LAUNCHER_DIR;
+    SetUserDirectory(fs::is_directory(portable_user_directory) ? portable_user_directory
+                                                               : standard_user_directory);
+    CreateLauncherPaths(fs::is_directory(portable_launcher_directory)
+                            ? portable_launcher_directory
+                            : platform_launcher_directory);
+    user_paths_initialized = true;
+}
+
+const fs::path& GetApplicationDirectory() {
+    if (application_directory.empty()) {
+        throw std::logic_error("User paths have not been initialized");
+    }
+    return application_directory;
+}
+
+const fs::path& GetStandardUserDirectory() {
+    if (standard_user_directory.empty()) {
+        throw std::logic_error("User paths have not been initialized");
+    }
+    return standard_user_directory;
+}
+
+bool StandardUserDirectoryExistedAtStartup() {
+    return standard_user_directory_existed;
+}
+
+fs::path GetPortableUserDirectory() {
+    return GetApplicationDirectory() / PORTABLE_DIR;
+}
+
+bool IsPortableUserDirectory() {
+    return user_paths_initialized && GetUserPath(PathType::UserDir) == GetPortableUserDirectory();
+}
+
+void SetUserDirectory(const fs::path& user_dir) {
+    fs::create_directories(user_dir);
+    const auto create_path = [](PathType shad_path, const fs::path& new_path) {
+        fs::create_directories(new_path);
+        user_paths.insert_or_assign(shad_path, new_path);
+    };
+
+    create_path(PathType::UserDir, user_dir);
+    create_path(PathType::LogDir, user_dir / LOG_DIR);
+    create_path(PathType::ScreenshotsDir, user_dir / SCREENSHOTS_DIR);
+    create_path(PathType::ShaderDir, user_dir / SHADER_DIR);
+    create_path(PathType::GameDataDir, user_dir / GAMEDATA_DIR);
+    create_path(PathType::TempDataDir, user_dir / TEMPDATA_DIR);
+    create_path(PathType::SysModuleDir, user_dir / SYSMODULES_DIR);
+    create_path(PathType::DownloadDir, user_dir / DOWNLOAD_DIR);
+    create_path(PathType::CapturesDir, user_dir / CAPTURES_DIR);
+    create_path(PathType::CheatsDir, user_dir / CHEATS_DIR);
+    create_path(PathType::PatchesDir, user_dir / PATCHES_DIR);
+    create_path(PathType::MetaDataDir, user_dir / METADATA_DIR);
+    create_path(PathType::CustomTrophy, user_dir / CUSTOM_TROPHY);
+    create_path(PathType::CustomConfigs, user_dir / CUSTOM_CONFIGS);
+    create_path(PathType::CacheDir, user_dir / CACHE_DIR);
+    create_path(PathType::FontsDir, user_dir / FONTS_DIR);
+    create_path(PathType::HomeDir, user_dir / HOME_DIR);
+    create_path(PathType::TrophyDir, user_dir / TROPHY_DIR);
+    CreateTrophyNotice(user_dir);
+}
 
 bool ValidatePath(const fs::path& path) {
     if (path.empty()) {
@@ -220,7 +281,7 @@ std::string PathToUTF8String(const std::filesystem::path& path) {
 }
 
 const fs::path& GetUserPath(PathType shad_path) {
-    return UserPaths.at(shad_path);
+    return user_paths.at(shad_path);
 }
 
 std::string GetUserPathString(PathType shad_path) {
@@ -234,7 +295,7 @@ void SetUserPath(PathType shad_path, const fs::path& new_path) {
         return;
     }
 
-    UserPaths.insert_or_assign(shad_path, new_path);
+    user_paths.insert_or_assign(shad_path, new_path);
 }
 
 std::optional<fs::path> FindGameByID(const fs::path& dir, const std::string& game_id,

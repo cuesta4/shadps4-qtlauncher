@@ -87,12 +87,18 @@ public:
         QMenu* openFolderMenu = new QMenu(tr("Open Folder..."), widget);
         QAction* openGameFolder = new QAction(tr("Open Game Folder"), widget);
         QAction* openUpdateFolder = new QAction(tr("Open Update Folder"), widget);
+        QAction* openPatchesFolder = new QAction(tr("Open Patches Folder"), widget);
+        QAction* openCheatsFolder = new QAction(tr("Open Cheats Folder"), widget);
+        QAction* openCacheFolder = new QAction(tr("Open Cache Folder"), widget);
         QMenu* openSaveDataMenu = new QMenu(tr("Open Save Data Folder"), widget);
 
         QAction* openLogFolder = new QAction(tr("Open Log Folder"), widget);
 
         openFolderMenu->addAction(openGameFolder);
         openFolderMenu->addAction(openUpdateFolder);
+        openFolderMenu->addAction(openPatchesFolder);
+        openFolderMenu->addAction(openCheatsFolder);
+        openFolderMenu->addAction(openCacheFolder);
         openFolderMenu->addAction(openLogFolder);
         openFolderMenu->addMenu(openSaveDataMenu);
 
@@ -463,6 +469,18 @@ public:
                 QMessageBox::critical(nullptr, tr("Error"),
                                       QString(tr("This game has no update folder to open!")));
             }
+        }
+
+        if (selected == openPatchesFolder || selected == openCheatsFolder ||
+            selected == openCacheFolder) {
+            const auto path_type = selected == openPatchesFolder
+                                       ? Common::FS::PathType::PatchesDir
+                                   : selected == openCheatsFolder
+                                       ? Common::FS::PathType::CheatsDir
+                                       : Common::FS::PathType::CacheDir;
+            QString folder_path;
+            Common::FS::PathToQString(folder_path, Common::FS::GetUserPath(path_type));
+            QDesktopServices::openUrl(QUrl::fromLocalFile(folder_path));
         }
 
         for (int i = 0; const auto& action : openSaveActionList) {

@@ -3,9 +3,10 @@
 
 #include <QDockWidget>
 #include <QKeyEvent>
-#include <QPlainTextEdit>
 #include <QProgressDialog>
 #include <QStatusBar>
+#include <QTextCharFormat>
+#include <QTextCursor>
 
 #include "about_dialog.h"
 #include "cheats_patches.h"
@@ -32,6 +33,16 @@
 #include "settings_dialog.h"
 #include "skylander_dialog.h"
 #include "user_manager_dialog.h"
+
+namespace {
+
+QString GetEmulatorWorkingDirectory() {
+    QString path;
+    Common::FS::PathToQString(path, Common::FS::GetApplicationDirectory());
+    return path;
+}
+
+} // namespace
 
 MainWindow::MainWindow(QWidget* parent, bool log_to_terminal)
     : QMainWindow(parent), ui(new Ui::MainWindow),
@@ -993,8 +1004,14 @@ void MainWindow::CreateConnects() {
 }
 
 void MainWindow::PrintLog(QString entry, QColor textColor) {
-    ui->logDisplay->setTextColor(textColor);
-    ui->logDisplay->append(entry);
+    QTextCursor cursor(ui->logDisplay->document());
+    cursor.movePosition(QTextCursor::End);
+    cursor.insertBlock();
+
+    QTextCharFormat format;
+    format.setForeground(textColor);
+    cursor.insertText(entry, format);
+
     QScrollBar* sb = ui->logDisplay->verticalScrollBar();
     sb->setValue(sb->maximum());
 }
@@ -1451,7 +1468,7 @@ tr("No emulator version was selected.\nThe Version Manager menu will then open.\
     EmulatorState::GetInstance()->SetGameRunning(true);
     last_game_path = path;
 
-    QString workDir = QDir::currentPath();
+    const QString workDir = GetEmulatorWorkingDirectory();
     m_ipc_client->startEmulator(fileInfo, final_args, workDir);
     m_ipc_client->setActiveController(GamepadSelect::GetSelectedGamepad());
 }
@@ -1528,7 +1545,7 @@ void MainWindow::StartEmulatorExecutable(std::filesystem::path emuPath, QString 
     }
 
     EmulatorState::GetInstance()->SetGameRunning(true);
-    QString workDir = QDir::currentPath();
+    const QString workDir = GetEmulatorWorkingDirectory();
     m_ipc_client->startEmulator(fileInfo, args, workDir, disable_ipc);
 }
 
@@ -1561,7 +1578,7 @@ void MainWindow::RestartEmulator() {
     }
 
     QFileInfo fileInfo(exe);
-    QString workDir = fileInfo.absolutePath();
+    const QString workDir = GetEmulatorWorkingDirectory();
 
     m_ipc_client->startEmulator(fileInfo, args, workDir);
 }

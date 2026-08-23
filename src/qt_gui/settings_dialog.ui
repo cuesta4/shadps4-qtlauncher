@@ -2299,6 +2299,13 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="validationLoggerCheckBox">
+                 <property name="text">
+                  <string>Enable GPU Validation Logger</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QGroupBox" name="vkLayersGroupBox">
                  <property name="title">
                   <string>Validation Layers</string>
@@ -2441,7 +2448,7 @@
                    <property name="labelAlignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set></property>
                    <property name="horizontalSpacing"><number>6</number></property><property name="verticalSpacing"><number>6</number></property>
                    <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                   <item row="0" column="0" colspan="2"><widget class="QCheckBox" name="fastPathCheckBox"><property name="text"><string>Enable High Draw-Call Fast Path</string></property></widget></item>
+                   <item row="0" column="0" colspan="2"><widget class="QCheckBox" name="enablePredicationCheckBox"><property name="text"><string>Enable Predication Handling</string></property></widget></item>
                  </layout>
                 </widget>
                </item>
@@ -2458,6 +2465,7 @@
                    <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
                    <item row="0" column="0" colspan="2"><widget class="QCheckBox" name="shaderCaheCheckBox"><property name="text"><string>Enable Shader Cache</string></property></widget></item>
                    <item row="1" column="0" colspan="2"><widget class="QCheckBox" name="shaderCacheArchiveCheckBox"><property name="text"><string>Compress the Shader Cache files into a zip file</string></property></widget></item>
+                   <item row="2" column="0" colspan="2"><widget class="QCheckBox" name="asyncShaderRecompilingCheckBox"><property name="text"><string>Async Shader Recompiling</string></property></widget></item>
                  </layout>
                 </widget>
                </item>
@@ -2617,6 +2625,13 @@
                    <property name="suffix"><string notr="true"> MiB/s</string></property>
                    <property name="maximum"><number>100000</number></property>
                   </widget>
+                 </item>
+                  <item>
+                   <widget class="QCheckBox" name="app0DisableTimeStretchingCheckBox">
+                    <property name="text">
+                     <string>Disable Time Dilation</string>
+                    </property>
+                   </widget>
                  </item>
                 </layout>
                </widget>

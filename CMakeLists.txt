@@ -243,6 +243,8 @@ set(COMMON src/common/logging/classes.h
            src/common/io_file.h
            src/common/path_util.cpp
            src/common/path_util.h
+           src/common/portable_user.cpp
+           src/common/portable_user.h
            src/common/sha1.h
            src/common/types.h
            src/common/memory_patcher.cpp

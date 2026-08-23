@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFileDialog>
@@ -12,11 +13,14 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include "common/key_manager.h"
+#include "common/logging/log.h"
+#include "common/portable_user.h"
 #include "core/emulator_settings.h"
 #include "game_install_dialog.h"
 #include "gui_settings.h"
 
-GameInstallDialog::GameInstallDialog() : m_gamesDirectory(nullptr) {
+GameInstallDialog::GameInstallDialog() {
     m_gui_settings = std::make_shared<gui_settings>();
 
     auto layout = new QVBoxLayout(this);
@@ -24,6 +28,7 @@ GameInstallDialog::GameInstallDialog() : m_gamesDirectory(nullptr) {
     layout->addWidget(SetupGamesDirectory());
     layout->addWidget(SetupAddonsDirectory());
     layout->addWidget(SetupVersionDirectory());
+    layout->addWidget(SetupPortableMode());
     layout->addStretch();
     layout->addWidget(SetupDialogActions());
 
@@ -108,7 +113,8 @@ QWidget* GameInstallDialog::SetupAddonsDirectory() {
 }
 
 QWidget* GameInstallDialog::SetupVersionDirectory() {
-    auto group = new QGroupBox(tr("Directory to install emulator versions"));
+    auto group = m_versionDirectoryGroup =
+        new QGroupBox(tr("Directory to install emulator versions"));
     auto layout = new QHBoxLayout(group);
 
     m_versionDirectory = new QLineEdit();
@@ -135,6 +141,26 @@ QWidget* GameInstallDialog::SetupVersionDirectory() {
     return group;
 }
 
+QWidget* GameInstallDialog::SetupPortableMode() {
+    m_enablePortableMode = new QCheckBox(tr("Enable portable mode"));
+    m_standardVersionDirectory = m_versionDirectory->text();
+
+    connect(m_enablePortableMode, &QCheckBox::toggled, this, [this](bool enabled) {
+        m_versionDirectoryGroup->setEnabled(!enabled);
+        if (!enabled) {
+            m_versionDirectory->setText(m_standardVersionDirectory);
+            return;
+        }
+
+        QString portable_version_directory;
+        Common::FS::PathToQString(portable_version_directory,
+                                  Common::FS::GetApplicationDirectory() / "versions");
+        m_versionDirectory->setText(portable_version_directory);
+    });
+    m_enablePortableMode->setChecked(Common::FS::IsPortableUserDirectory());
+    return m_enablePortableMode;
+}
+
 QWidget* GameInstallDialog::SetupDialogActions() {
     auto actions = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
@@ -148,7 +174,12 @@ void GameInstallDialog::Save() {
     // Check games directory.
     auto gamesDirectory = m_gamesDirectory->text();
     auto addonsDirectory = m_addonsDirectory->text();
+    const bool enable_portable_mode = m_enablePortableMode->isChecked();
     auto versionDirectory = m_versionDirectory->text();
+    if (enable_portable_mode) {
+        Common::FS::PathToQString(versionDirectory,
+                                  Common::FS::GetApplicationDirectory() / "versions");
+    }
 
     if (gamesDirectory.isEmpty() || !QDir(gamesDirectory).exists() ||
         !QDir::isAbsolutePath(gamesDirectory)) {
@@ -189,10 +220,39 @@ void GameInstallDialog::Save() {
     // Save the directories
     EmulatorSettings.AddGameInstallDir(Common::FS::PathFromQString(gamesDirectory));
     EmulatorSettings.SetAddonInstallDir(Common::FS::PathFromQString(addonsDirectory));
+    if (enable_portable_mode) {
+        // Keep games and DLCs external, but return every other configurable emulator path to the
+        // portable user directory defaults.
+        EmulatorSettings.SetHomeDir({});
+        EmulatorSettings.SetSysModulesDir({});
+        EmulatorSettings.SetFontsDir({});
+    }
     m_gui_settings->SetValue(gui::vm_versionPath, versionDirectory);
 
-    const auto config_dir = Common::FS::GetUserPath(Common::FS::PathType::UserDir);
-    EmulatorSettings.Save();
+    if (!EmulatorSettings.Save()) {
+        QMessageBox::critical(this, tr("Error"),
+                              tr("The emulator configuration could not be saved."));
+        return;
+    }
+
+    if (enable_portable_mode) {
+        m_gui_settings->sync();
+        const auto key_manager = KeyManager::GetInstance();
+        Common::Log::Flush();
+        Common::Log::Shutdown();
+        KeyManager::SetInstance(key_manager);
+
+        std::string migration_error;
+        if (!Common::FS::MigrateToPortableUserDirectory(migration_error)) {
+            Common::Log::Setup("shadPS4Launcher.log");
+            QMessageBox::critical(
+                this, tr("Portable mode migration failed"),
+                tr("Nothing was deleted. The AppData shadPS4 folder was kept.\n\n%1")
+                    .arg(QString::fromStdString(migration_error)));
+            return;
+        }
+        Common::Log::Setup("shadPS4Launcher.log");
+    }
 
     accept();
 }

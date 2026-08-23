@@ -5,8 +5,14 @@
 #include "system_error"
 #include "unordered_map"
 
+#include <QApplication>
+#include <QCoreApplication>
+#include <QMessageBox>
+
 #include "common/key_manager.h"
 #include "common/logging/log.h"
+#include "common/path_util.h"
+#include "common/portable_user.h"
 #include "common/versions.h"
 #include "core/emulator_settings.h"
 #include "core/emulator_state.h"
@@ -24,15 +30,73 @@ void StopProgram() {
     exit(0);
 }
 
+void HandlePortableCleanup() {
+    using Common::FS::PortableCleanupMode;
+
+    const auto mode = Common::FS::GetPortableCleanupMode();
+    if (mode == PortableCleanupMode::None) {
+        return;
+    }
+
+    std::string error;
+    std::error_code exists_error;
+    const bool source_exists = std::filesystem::exists(
+        Common::FS::GetStandardUserDirectory(), exists_error);
+    if (exists_error || !Common::FS::CanRemoveStandardUserDirectory(error)) {
+        QMessageBox::critical(
+            nullptr, "Portable mode",
+            QString("The AppData shadPS4 folder was kept to prevent data loss.\n\n%1")
+                .arg(QString::fromStdString(exists_error ? exists_error.message() : error)));
+        return;
+    }
+
+    if (!source_exists) {
+        if (!Common::FS::CompletePortableCleanup(error)) {
+            QMessageBox::critical(nullptr, "Portable mode", QString::fromStdString(error));
+        }
+        return;
+    }
+
+    if (mode == PortableCleanupMode::Ask) {
+        // Persist before displaying the dialog so an interrupted startup cannot ask twice.
+        if (!Common::FS::CompletePortableCleanup(error)) {
+            QMessageBox::critical(nullptr, "Portable mode", QString::fromStdString(error));
+            return;
+        }
+        if (QMessageBox::question(nullptr, "Portable mode",
+                                  "Do you want to delete the shadps4 folder on appdata?",
+                                  QMessageBox::Yes | QMessageBox::No, QMessageBox::No) !=
+            QMessageBox::Yes) {
+            return;
+        }
+    }
+
+    if (!Common::FS::RemoveStandardUserDirectory(error)) {
+        QMessageBox::critical(
+            nullptr, "Portable mode",
+            QString("The AppData shadPS4 folder was not deleted.\n\n%1")
+                .arg(QString::fromStdString(error)));
+        return;
+    }
+
+    if (mode == PortableCleanupMode::Automatic &&
+        !Common::FS::CompletePortableCleanup(error)) {
+        QMessageBox::critical(nullptr, "Portable mode", QString::fromStdString(error));
+    }
+}
+
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
 #endif
 
+    QApplication a(argc, argv);
+    Common::FS::InitializeUserPaths(
+        Common::FS::PathFromQString(QCoreApplication::applicationDirPath()));
+    HandlePortableCleanup();
+
     // Start default log
     Common::Log::Setup("shadPS4Launcher.log");
-
-    QApplication a(argc, argv);
 
     QApplication::setDesktopFileName("net.shadps4.qtlauncher");
 

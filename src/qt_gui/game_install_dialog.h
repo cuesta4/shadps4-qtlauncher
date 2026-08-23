@@ -8,6 +8,8 @@
 #include "common/path_util.h"
 #include "gui_settings.h"
 
+class QCheckBox;
+class QGroupBox;
 class QLineEdit;
 
 class GameInstallDialog final : public QDialog {
@@ -24,13 +26,17 @@ private slots:
 private:
     QWidget* SetupGamesDirectory();
     QWidget* SetupAddonsDirectory();
+    QWidget* SetupPortableMode();
     QWidget* SetupDialogActions();
     QWidget* SetupVersionDirectory();
     void Save();
     std::shared_ptr<gui_settings> m_gui_settings;
 
 private:
-    QLineEdit* m_gamesDirectory;
-    QLineEdit* m_addonsDirectory;
-    QLineEdit* m_versionDirectory;
+    QLineEdit* m_gamesDirectory{};
+    QLineEdit* m_addonsDirectory{};
+    QLineEdit* m_versionDirectory{};
+    QCheckBox* m_enablePortableMode{};
+    QGroupBox* m_versionDirectoryGroup{};
+    QString m_standardVersionDirectory;
 };

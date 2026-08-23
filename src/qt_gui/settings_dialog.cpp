@@ -605,6 +605,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         ui->vkSyncValidationCheckBox->installEventFilter(this);
         ui->vkCoreValidationCheckBox->installEventFilter(this);
         ui->vkGpuValidationCheckBox->installEventFilter(this);
+        ui->validationLoggerCheckBox->installEventFilter(this);
         ui->rdocCheckBox->installEventFilter(this);
         ui->crashDiagnosticsCheckBox->installEventFilter(this);
         ui->guestMarkersCheckBox->installEventFilter(this);
@@ -615,7 +616,9 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         // Experimental
         ui->readbacksGroupBox->installEventFilter(this);
         ui->hddReadSpeedGroupBox->installEventFilter(this);
-        ui->fastPathCheckBox->installEventFilter(this);
+        ui->app0DisableTimeStretchingCheckBox->installEventFilter(this);
+        ui->enablePredicationCheckBox->installEventFilter(this);
+        ui->asyncShaderRecompilingCheckBox->installEventFilter(this);
         ui->readbackLinearImagesCheckBox->installEventFilter(this);
         ui->dumpShadersCheckBox->installEventFilter(this);
         ui->dmaCheckBox->installEventFilter(this);
@@ -731,14 +734,18 @@ void SettingsDialog::LoadValuesFromConfig() {
     ui->readbacksModeComboBox->setCurrentIndex(EmulatorSettings.GetReadbacksMode());
     ui->hddReadSpeedSpinBox->setValue(
         NormalizeHddReadBandwidth(EmulatorSettings.GetApp0ReadBandwidthMiBps()));
+    ui->app0DisableTimeStretchingCheckBox->setChecked(
+        EmulatorSettings.IsApp0ReadDisableTimeStretching());
     ui->readbackLinearImagesCheckBox->setChecked(EmulatorSettings.IsReadbackLinearImagesEnabled());
     ui->dmaCheckBox->setChecked(EmulatorSettings.IsDirectMemoryAccessEnabled());
-    ui->fastPathCheckBox->setChecked(EmulatorSettings.IsHighDrawCallOptimization());
+    ui->enablePredicationCheckBox->setChecked(EmulatorSettings.IsEnablePredication());
     ui->neoCheckBox->setChecked(EmulatorSettings.IsNeo());
     ui->devkitCheckBox->setChecked(EmulatorSettings.IsDevKit());
     ui->networkConnectedCheckBox->setChecked(EmulatorSettings.IsConnectedToNetwork());
     ui->shaderCaheCheckBox->setChecked(EmulatorSettings.IsPipelineCacheEnabled());
     ui->shaderCacheArchiveCheckBox->setChecked(EmulatorSettings.IsPipelineCacheArchived());
+    ui->asyncShaderRecompilingCheckBox->setChecked(
+        EmulatorSettings.IsAsyncShaderRecompiling());
     ui->shadnetCheckBox->setChecked(EmulatorSettings.IsShadNetEnabled());
     ui->serverLineEdit->setText(QString::fromStdString(EmulatorSettings.GetShadNetServer()));
     ui->servWebApiLineEdit->setText(
@@ -818,6 +825,7 @@ void SettingsDialog::LoadValuesFromConfig() {
     ui->vkSyncValidationCheckBox->setChecked(EmulatorSettings.IsVkValidationSyncEnabled());
     ui->vkCoreValidationCheckBox->setChecked(EmulatorSettings.IsVkValidationCoreEnabled());
     ui->vkGpuValidationCheckBox->setChecked(EmulatorSettings.IsVkValidationGpuEnabled());
+    ui->validationLoggerCheckBox->setChecked(EmulatorSettings.IsValidationLoggerEnabled());
     ui->vkValidationCheckBox->isChecked() ? ui->vkLayersGroupBox->setVisible(true)
                                           : ui->vkLayersGroupBox->setVisible(false);
     ui->shaderCaheCheckBox->isChecked() ? ui->shaderCacheArchiveCheckBox->setVisible(true)
@@ -1060,6 +1068,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Enable Core Validation:\\nEnables the main API validation functions.\\nThis will reduce performance and likely change the behavior of emulation.\\nYou need the Vulkan SDK for this to work.");
     } else if (elementName == "vkGpuValidationCheckBox") {
         text = tr("Enable GPU-Assisted Validation:\\nInstruments shaders with code that validates if they are behaving correctly.\\nThis will reduce performance and likely change the behavior of emulation.\\nYou need the Vulkan SDK for this to work.");
+    } else if (elementName == "validationLoggerCheckBox") {
+        text = tr("Enable GPU Validation Logger:\\nLogs Vulkan validation layer messages to the output log file.");
     } else if (elementName == "rdocCheckBox") {
         text = tr("Enable RenderDoc Debugging:\\nIf enabled, the emulator will provide compatibility with Renderdoc to allow capture and analysis of the currently rendered frame.");
     } else if (elementName == "crashDiagnosticsCheckBox") {
@@ -1097,6 +1107,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Enable Shader Cache:\\nStoring compiled shaders to avoid recompilations, reduce stuttering.");
     } else if (elementName == "shaderCacheArchiveCheckBox") {
         text = tr("Compress the Shader Cache files into a zip file:\\nThe shader cache files are stored within a single zip file instead of multiple separate files.");
+    } else if (elementName == "asyncShaderRecompilingCheckBox") {
+        text = tr("Async Shader Recompiling:\\nCompiles graphics shaders and pipelines in the background to reduce stutter. May cause visual issues or instability in some games. Restart required.");
     } else if (elementName == "shadnetCheckBox") {
         text = tr("shadNet:\\nCompatibility is very limited at the moment.\\nYou can register at https://www.shadps4.net/shadnet/register/.");
     } else if (elementName == "readbacksGroupBox") {
@@ -1105,8 +1117,10 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Simulates the PS4's HDD read speed for compatibility.\n"
                   "Enter a custom bandwidth in MiB/s. Values from 1 to 49 are automatically "
                   "raised to 50 MiB/s.\n0 and values above 200 use unlimited/native speed.");
-    } else if (elementName == "fastPathCheckBox") {
-        text = tr("High Draw-Call Fast Path:\\nReduces CPU overhead in games with very high draw-call counts.\\nThis is an experimental per-game optimization and requires restarting the game.");
+    } else if (elementName == "app0DisableTimeStretchingCheckBox") {
+        text = tr("Disable Time Dilation:\\nKeeps simulated HDD delays tied to real time when emulation slows down.");
+    } else if (elementName == "enablePredicationCheckBox") {
+        text = tr("GPU-Side Predication:\\nEnables the GPU implementation of IT_SET_PREDICATION.\\nDisable it for titles that regress with conditional rendering. Restart the game after changing this option.");
     } else if (elementName == "readbackLinearImagesCheckBox") {
         text = tr("Enable Readback Linear Images:\\nEnables async downloading of GPU modified linear images.\\nMight fix issues in some games.");
     } else if (elementName == "dmemGroupBox") {
@@ -1139,17 +1153,20 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
         NormalizeHddReadBandwidth(static_cast<u32>(ui->hddReadSpeedSpinBox->value()));
     ui->hddReadSpeedSpinBox->setValue(static_cast<int>(hdd_read_bandwidth));
     EmulatorSettings.SetApp0ReadBandwidthMiBps(hdd_read_bandwidth, is_specific);
+    EmulatorSettings.SetApp0ReadDisableTimeStretching(
+        ui->app0DisableTimeStretchingCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetReadbackLinearImagesEnabled(ui->readbackLinearImagesCheckBox->isChecked(),
                                                     is_specific);
     EmulatorSettings.SetDirectMemoryAccessEnabled(ui->dmaCheckBox->isChecked(), is_specific);
-    EmulatorSettings.SetHighDrawCallOptimization(ui->fastPathCheckBox->isChecked(),
-                                                 is_specific);
+    EmulatorSettings.SetEnablePredication(ui->enablePredicationCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetDevKit(ui->devkitCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetNeo(ui->neoCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetConnectedToNetwork(ui->networkConnectedCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetPipelineCacheEnabled(ui->shaderCaheCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetPipelineCacheArchived(ui->shaderCacheArchiveCheckBox->isChecked(),
-                                              is_specific);
+                                               is_specific);
+    EmulatorSettings.SetAsyncShaderRecompiling(
+        ui->asyncShaderRecompilingCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetShadNetEnabled(ui->shadnetCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetShadNetServer(ui->serverLineEdit->text().toStdString(), is_specific);
     EmulatorSettings.SetSignalingInfo(ui->signalingInfoLineEdit->text().toStdString(), is_specific);
@@ -1223,6 +1240,8 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
                                                 is_specific);
     EmulatorSettings.SetVkValidationGpuEnabled(ui->vkGpuValidationCheckBox->isChecked(),
                                                is_specific);
+    EmulatorSettings.SetValidationLoggerEnabled(ui->validationLoggerCheckBox->isChecked(),
+                                                is_specific);
     EmulatorSettings.SetRenderdocEnabled(ui->rdocCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetVkHostMarkersEnabled(ui->hostMarkersCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetVkGuestMarkersEnabled(ui->guestMarkersCheckBox->isChecked(), is_specific);

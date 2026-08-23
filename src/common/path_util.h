@@ -62,6 +62,21 @@ constexpr auto TROPHY_DIR = "trophy";
 constexpr auto LOG_FILE = "shad_log.txt";
 
 /**
+ * Initializes launcher and emulator paths. The standard shadPS4 directory is checked before any
+ * directory or file is created.
+ */
+void InitializeUserPaths(const std::filesystem::path& application_dir);
+
+[[nodiscard]] const std::filesystem::path& GetApplicationDirectory();
+[[nodiscard]] const std::filesystem::path& GetStandardUserDirectory();
+[[nodiscard]] bool StandardUserDirectoryExistedAtStartup();
+[[nodiscard]] std::filesystem::path GetPortableUserDirectory();
+[[nodiscard]] bool IsPortableUserDirectory();
+
+/// Redirects every emulator-owned path below the supplied user directory.
+void SetUserDirectory(const std::filesystem::path& user_dir);
+
+/**
  * Validates a given path.
  *
  * A given path is valid if it meets these conditions:

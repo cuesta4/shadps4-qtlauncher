@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: Copyright 2025-2026 shadPS4 Emulator Project
+// SPDX-FileCopyrightText: Copyright 2025-2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #pragma once
@@ -201,6 +201,7 @@ struct GeneralSettings {
     Setting<bool> dev_kit_mode{false};
     Setting<int> extra_dmem_in_mbytes{0};
     Setting<u32> app0_read_bandwidth_mibps{0};
+    Setting<bool> app0_read_disable_time_stretching{false};
     Setting<bool> shad_net_enabled{false};
     Setting<bool> trophy_popup_disabled{false};
     Setting<double> trophy_notification_duration{6.0};
@@ -226,6 +227,8 @@ struct GeneralSettings {
                                            &GeneralSettings::extra_dmem_in_mbytes),
             make_override<GeneralSettings>("app0_read_bandwidth_mibps",
                                            &GeneralSettings::app0_read_bandwidth_mibps),
+            make_override<GeneralSettings>("app0_read_disable_time_stretching",
+                                           &GeneralSettings::app0_read_disable_time_stretching),
             make_override<GeneralSettings>("shad_net_enabled", &GeneralSettings::shad_net_enabled),
             make_override<GeneralSettings>("trophy_popup_disabled",
                                            &GeneralSettings::trophy_popup_disabled),
@@ -248,6 +251,7 @@ struct GeneralSettings {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GeneralSettings, install_dirs, addon_install_dir, home_dir,
                                    sys_modules_dir, font_dir, volume_slider, neo_mode, dev_kit_mode,
                                    extra_dmem_in_mbytes, app0_read_bandwidth_mibps,
+                                   app0_read_disable_time_stretching,
                                    shad_net_enabled, trophy_popup_disabled,
                                    trophy_notification_duration, show_splash,
                                    trophy_notification_side, connected_to_network,
@@ -425,7 +429,7 @@ struct GPUSettings {
     Setting<u32> readbacks_mode{GpuReadbacksMode::Disabled};
     Setting<bool> readback_linear_images_enabled{false};
     Setting<bool> direct_memory_access_enabled{false};
-    Setting<bool> high_draw_call_optimization{false};
+    Setting<bool> enable_predication{false};
     Setting<bool> dump_shaders{false};
     Setting<bool> patch_shaders{false};
     Setting<u32> vblank_frequency{60};
@@ -457,8 +461,7 @@ struct GPUSettings {
                                        &GPUSettings::readback_linear_images_enabled),
             make_override<GPUSettings>("direct_memory_access_enabled",
                                        &GPUSettings::direct_memory_access_enabled),
-            make_override<GPUSettings>("high_draw_call_optimization",
-                                       &GPUSettings::high_draw_call_optimization),
+            make_override<GPUSettings>("enable_predication", &GPUSettings::enable_predication),
             make_override<GPUSettings>("vblank_frequency", &GPUSettings::vblank_frequency),
         };
     }
@@ -466,7 +469,7 @@ struct GPUSettings {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPUSettings, window_width, window_height, internal_screen_width,
                                    internal_screen_height, null_gpu, copy_gpu_buffers,
                                    readbacks_mode, readback_linear_images_enabled,
-                                   direct_memory_access_enabled, high_draw_call_optimization,
+                                   direct_memory_access_enabled, enable_predication,
                                    dump_shaders, patch_shaders,
                                    vblank_frequency, full_screen, full_screen_mode, present_mode,
                                    hdr_allowed, fsr_enabled, rcas_enabled, rcas_attenuation)
@@ -485,6 +488,8 @@ struct VulkanSettings {
     Setting<bool> vkguest_markers{false};
     Setting<bool> pipeline_cache_enabled{false};
     Setting<bool> pipeline_cache_archived{false};
+    Setting<bool> async_shader_recompiling{false};
+    Setting<bool> validation_logger_enabled{false};
     std::vector<OverrideItem> GetOverrideableFields() const {
         return std::vector<OverrideItem>{
             make_override<VulkanSettings>("gpu_id", &VulkanSettings::gpu_id),
@@ -505,6 +510,10 @@ struct VulkanSettings {
                                           &VulkanSettings::pipeline_cache_enabled),
             make_override<VulkanSettings>("pipeline_cache_archived",
                                           &VulkanSettings::pipeline_cache_archived),
+            make_override<VulkanSettings>("async_shader_recompiling",
+                                          &VulkanSettings::async_shader_recompiling),
+            make_override<VulkanSettings>("validation_logger_enabled",
+                                          &VulkanSettings::validation_logger_enabled),
         };
     }
 };
@@ -512,7 +521,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VulkanSettings, gpu_id, renderdoc_enabled, vk
                                    vkvalidation_core_enabled, vkvalidation_sync_enabled,
                                    vkvalidation_gpu_enabled, vkcrash_diagnostic_enabled,
                                    vkhost_markers, vkguest_markers, pipeline_cache_enabled,
-                                   pipeline_cache_archived)
+                                   pipeline_cache_archived, async_shader_recompiling,
+                                   validation_logger_enabled)
 
 // -------------------------------
 // Main manager
@@ -665,6 +675,8 @@ public:
     SETTING_FORWARD_BOOL(m_general, DevKit, dev_kit_mode)
     SETTING_FORWARD(m_general, ExtraDmemInMBytes, extra_dmem_in_mbytes)
     SETTING_FORWARD(m_general, App0ReadBandwidthMiBps, app0_read_bandwidth_mibps)
+    SETTING_FORWARD_BOOL(m_general, App0ReadDisableTimeStretching,
+                         app0_read_disable_time_stretching)
     bool IsShadNetEnabled() const {
         return m_general.shad_net_enabled.get(m_configMode) &&
                !m_shadnet_session_disabled.load(std::memory_order_relaxed);
@@ -747,7 +759,7 @@ public:
     SETTING_FORWARD(m_gpu, ReadbacksMode, readbacks_mode)
     SETTING_FORWARD_BOOL(m_gpu, ReadbackLinearImagesEnabled, readback_linear_images_enabled)
     SETTING_FORWARD_BOOL(m_gpu, DirectMemoryAccessEnabled, direct_memory_access_enabled)
-    SETTING_FORWARD_BOOL(m_gpu, HighDrawCallOptimization, high_draw_call_optimization)
+    SETTING_FORWARD_BOOL(m_gpu, EnablePredication, enable_predication)
     SETTING_FORWARD_BOOL_READONLY(m_gpu, PatchShaders, patch_shaders)
 
     u32 GetVblankFrequency() {
@@ -793,6 +805,8 @@ public:
     SETTING_FORWARD_BOOL(m_vulkan, VkGuestMarkersEnabled, vkguest_markers)
     SETTING_FORWARD_BOOL(m_vulkan, PipelineCacheEnabled, pipeline_cache_enabled)
     SETTING_FORWARD_BOOL(m_vulkan, PipelineCacheArchived, pipeline_cache_archived)
+    SETTING_FORWARD_BOOL(m_vulkan, AsyncShaderRecompiling, async_shader_recompiling)
+    SETTING_FORWARD_BOOL(m_vulkan, ValidationLoggerEnabled, validation_logger_enabled)
 
 #undef SETTING_FORWARD
 #undef SETTING_FORWARD_BOOL
