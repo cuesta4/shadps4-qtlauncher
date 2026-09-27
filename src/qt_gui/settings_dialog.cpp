@@ -569,6 +569,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         ui->graphicsAdapterGroupBox->installEventFilter(this);
         ui->windowSizeGroupBox->installEventFilter(this);
         ui->presentModeGroupBox->installEventFilter(this);
+        ui->enableReflexCheckBox->installEventFilter(this);
         ui->heightDivider->installEventFilter(this);
         ui->nullGpuCheckBox->installEventFilter(this);
         ui->enableHDRCheckBox->installEventFilter(this);
@@ -616,6 +617,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         // Experimental
         ui->readbacksGroupBox->installEventFilter(this);
         ui->hddReadSpeedGroupBox->installEventFilter(this);
+        ui->gpuFramesAheadGroupBox->installEventFilter(this);
         ui->app0DisableTimeStretchingCheckBox->installEventFilter(this);
         ui->enablePredicationCheckBox->installEventFilter(this);
         ui->asyncShaderRecompilingCheckBox->installEventFilter(this);
@@ -756,6 +758,8 @@ void SettingsDialog::LoadValuesFromConfig() {
     ui->dmemSpinBox->setValue(EmulatorSettings.GetExtraDmemInMBytes());
     ui->redZoneComboBox->setCurrentIndex(
         static_cast<int>(EmulatorSettings.GetWindowsGuestRedZoneProtectionMode()));
+    ui->gpuFramesAheadComboBox->setCurrentIndex(static_cast<int>(std::min<u32>(
+        EmulatorSettings.GetGpuFramesAhead(), ui->gpuFramesAheadComboBox->count() - 1)));
 
     // First options is auto selection -1, so gpuId on the GUI will always have to subtract 1
     // when setting and add 1 when getting to select the correct gpu in Qt
@@ -799,6 +803,7 @@ void SettingsDialog::LoadValuesFromConfig() {
     std::string presentMode = EmulatorSettings.GetPresentMode();
     QString translatedText_PresentMode = presentModeMap.key(QString::fromStdString(presentMode));
     ui->presentModeComboBox->setCurrentText(translatedText_PresentMode);
+    ui->enableReflexCheckBox->setChecked(EmulatorSettings.IsReflexEnabled());
 
     // Log
     ui->logAppendCheckBox->setChecked(EmulatorSettings.IsLogAppend());
@@ -1018,6 +1023,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
                   "Mailbox: Frames synchronize with your screen's refresh rate. New frames will replace any pending frames. Reduces latency but may skip frames if running behind.\\n"
                   "Fifo: Frames synchronize with your screen's refresh rate. New frames will be queued behind pending frames. Ensures all frames are presented but may increase latency.\\n"
                   "Immediate: Frames immediately present to your screen when ready. May result in tearing.");
+    } else if (elementName == "enableReflexCheckBox") {
+        text = tr("Enable NVIDIA Reflex:\\nHolds the emulated GPU command processor back until the host GPU is about to need the next frame, so frames do not wait in a queue in front of the GPU. Lowers input latency when the game is limited by the GPU.\\nRequires an NVIDIA GPU and driver with VK_NV_low_latency2; ignored otherwise.");
     } else if (elementName == "windowSizeGroupBox") {
         text = tr("Width/Height:\\nSets the size of the emulator window at launch, which can be resized during gameplay.\\nThis is different from the in-game resolution.");
     } else if (elementName == "heightDivider") {
@@ -1117,6 +1124,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Simulates the PS4's HDD read speed for compatibility.\n"
                   "Enter a custom bandwidth in MiB/s. Values from 1 to 49 are automatically "
                   "raised to 50 MiB/s.\n0 and values above 200 use unlimited/native speed.");
+    } else if (elementName == "gpuFramesAheadGroupBox") {
+        text = tr("GPU Frames Ahead:\\nLimits how many frames the GPU may fall behind the emulation. Lower values reduce latency and stutter when the GPU is the bottleneck; 0 removes the limit.\\nDefault: 2. Restart the game after changing this option.");
     } else if (elementName == "app0DisableTimeStretchingCheckBox") {
         text = tr("Disable Time Dilation:\\nKeeps simulated HDD delays tied to real time when emulation slows down.");
     } else if (elementName == "enablePredicationCheckBox") {
@@ -1178,6 +1187,8 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
     EmulatorSettings.SetWindowsGuestRedZoneProtectionMode(
         static_cast<WindowsGuestRedZoneProtectionMode>(ui->redZoneComboBox->currentIndex()),
         is_specific);
+    EmulatorSettings.SetGpuFramesAhead(
+        static_cast<u32>(ui->gpuFramesAheadComboBox->currentIndex()), is_specific);
 
     EmulatorSettings.SetFullScreen(
         screenModeMap.value(ui->displayModeComboBox->currentText()) != "Windowed", is_specific);
@@ -1185,6 +1196,7 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
         screenModeMap.value(ui->displayModeComboBox->currentText()).toStdString(), is_specific);
     EmulatorSettings.SetPresentMode(
         presentModeMap.value(ui->presentModeComboBox->currentText()).toStdString(), is_specific);
+    EmulatorSettings.SetReflexEnabled(ui->enableReflexCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetMotionControlsEnabled(ui->motionControlsCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetBackgroundControllerInput(ui->backgroundControllerCheckBox->isChecked(),
                                                   is_specific);

@@ -436,6 +436,7 @@ struct GPUSettings {
     Setting<bool> full_screen{false};
     Setting<std::string> full_screen_mode{"Windowed"};
     Setting<std::string> present_mode{"Mailbox"};
+    Setting<bool> enable_reflex{false};
     Setting<bool> hdr_allowed{false};
     Setting<bool> fsr_enabled{false};
     Setting<bool> rcas_enabled{true};
@@ -448,6 +449,7 @@ struct GPUSettings {
             make_override<GPUSettings>("full_screen", &GPUSettings::full_screen),
             make_override<GPUSettings>("full_screen_mode", &GPUSettings::full_screen_mode),
             make_override<GPUSettings>("present_mode", &GPUSettings::present_mode),
+            make_override<GPUSettings>("enable_reflex", &GPUSettings::enable_reflex),
             make_override<GPUSettings>("window_height", &GPUSettings::window_height),
             make_override<GPUSettings>("window_width", &GPUSettings::window_width),
             make_override<GPUSettings>("hdr_allowed", &GPUSettings::hdr_allowed),
@@ -472,7 +474,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPUSettings, window_width, window_height, int
                                    direct_memory_access_enabled, enable_predication,
                                    dump_shaders, patch_shaders,
                                    vblank_frequency, full_screen, full_screen_mode, present_mode,
-                                   hdr_allowed, fsr_enabled, rcas_enabled, rcas_attenuation)
+                                   enable_reflex, hdr_allowed, fsr_enabled, rcas_enabled, rcas_attenuation)
 // -------------------------------
 // Vulkan settings
 // -------------------------------
@@ -490,6 +492,8 @@ struct VulkanSettings {
     Setting<bool> pipeline_cache_archived{false};
     Setting<bool> async_shader_recompiling{false};
     Setting<bool> validation_logger_enabled{false};
+    // Guest frames the GPU may lag behind the command processor; 0 leaves the GPU unbounded.
+    Setting<u32> gpu_frames_ahead{2};
     std::vector<OverrideItem> GetOverrideableFields() const {
         return std::vector<OverrideItem>{
             make_override<VulkanSettings>("gpu_id", &VulkanSettings::gpu_id),
@@ -514,6 +518,7 @@ struct VulkanSettings {
                                           &VulkanSettings::async_shader_recompiling),
             make_override<VulkanSettings>("validation_logger_enabled",
                                           &VulkanSettings::validation_logger_enabled),
+            make_override<VulkanSettings>("gpu_frames_ahead", &VulkanSettings::gpu_frames_ahead),
         };
     }
 };
@@ -522,7 +527,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VulkanSettings, gpu_id, renderdoc_enabled, vk
                                    vkvalidation_gpu_enabled, vkcrash_diagnostic_enabled,
                                    vkhost_markers, vkguest_markers, pipeline_cache_enabled,
                                    pipeline_cache_archived, async_shader_recompiling,
-                                   validation_logger_enabled)
+                                   validation_logger_enabled, gpu_frames_ahead)
 
 // -------------------------------
 // Main manager
@@ -748,6 +753,7 @@ public:
     SETTING_FORWARD_BOOL(m_gpu, FullScreen, full_screen)
     SETTING_FORWARD(m_gpu, FullScreenMode, full_screen_mode)
     SETTING_FORWARD(m_gpu, PresentMode, present_mode)
+    SETTING_FORWARD_BOOL(m_gpu, ReflexEnabled, enable_reflex)
     SETTING_FORWARD(m_gpu, WindowHeight, window_height)
     SETTING_FORWARD(m_gpu, WindowWidth, window_width)
     SETTING_FORWARD(m_gpu, InternalScreenHeight, internal_screen_height)
@@ -807,6 +813,7 @@ public:
     SETTING_FORWARD_BOOL(m_vulkan, PipelineCacheArchived, pipeline_cache_archived)
     SETTING_FORWARD_BOOL(m_vulkan, AsyncShaderRecompiling, async_shader_recompiling)
     SETTING_FORWARD_BOOL(m_vulkan, ValidationLoggerEnabled, validation_logger_enabled)
+    SETTING_FORWARD(m_vulkan, GpuFramesAhead, gpu_frames_ahead)
 
 #undef SETTING_FORWARD
 #undef SETTING_FORWARD_BOOL

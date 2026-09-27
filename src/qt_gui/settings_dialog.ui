@@ -1068,6 +1068,13 @@
                     </item>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QCheckBox" name="enableReflexCheckBox">
+                    <property name="text">
+                     <string>Enable NVIDIA Reflex</string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </widget>
                </item>
@@ -2469,6 +2476,31 @@
                  </layout>
                 </widget>
                </item>
+               <item>
+                 <widget class="QGroupBox" name="hddReadSpeedGroupBox">
+                  <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+                  <property name="title"><string>HDD Read Speed</string></property>
+                  <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
+                  <layout class="QVBoxLayout" name="hddReadSpeedLayout">
+                   <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+                   <item>
+                    <widget class="QSpinBox" name="hddReadSpeedSpinBox">
+                     <property name="accelerated"><bool>true</bool></property>
+                     <property name="correctionMode"><enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum></property>
+                     <property name="keyboardTracking"><bool>false</bool></property>
+                     <property name="specialValueText"><string>Unlimited</string></property>
+                     <property name="suffix"><string notr="true"> MiB/s</string></property>
+                     <property name="maximum"><number>100000</number></property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="app0DisableTimeStretchingCheckBox">
+                     <property name="text"><string>Disable Time Dilation</string></property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+               </item>
                <item><spacer name="renderingGroupsSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
               </layout>
              </item>
@@ -2610,28 +2642,18 @@
                </widget>
               </item>
               <item>
-                <widget class="QGroupBox" name="hddReadSpeedGroupBox">
+                <widget class="QGroupBox" name="gpuFramesAheadGroupBox">
                  <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                 <property name="title"><string>HDD Read Speed</string></property>
+                 <property name="title"><string>GPU Frames Ahead</string></property>
                  <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                 <layout class="QVBoxLayout" name="hddReadSpeedLayout">
+                 <layout class="QVBoxLayout" name="gpuFramesAheadLayout">
                   <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
                  <item>
-                  <widget class="QSpinBox" name="hddReadSpeedSpinBox">
-                   <property name="accelerated"><bool>true</bool></property>
-                   <property name="correctionMode"><enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum></property>
-                   <property name="keyboardTracking"><bool>false</bool></property>
-                   <property name="specialValueText"><string>Unlimited</string></property>
-                   <property name="suffix"><string notr="true"> MiB/s</string></property>
-                   <property name="maximum"><number>100000</number></property>
+                  <widget class="QComboBox" name="gpuFramesAheadComboBox">
+                   <item><property name="text"><string notr="true">0</string></property></item>
+                   <item><property name="text"><string notr="true">1</string></property></item>
+                   <item><property name="text"><string notr="true">2</string></property></item>
                   </widget>
-                 </item>
-                  <item>
-                   <widget class="QCheckBox" name="app0DisableTimeStretchingCheckBox">
-                    <property name="text">
-                     <string>Disable Time Dilation</string>
-                    </property>
-                   </widget>
                  </item>
                 </layout>
                </widget>
