@@ -141,13 +141,12 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
       gs_serial(gsc_serial) {
 
     ui->setupUi(this);
-    for (const auto& option : {std::pair{"None", 0}, {"FSR1", 1}, {"GSR1", 2}}) {
+    for (const auto& option : {std::pair{"None", 0}, {"FSR1", 1}}) {
         ui->UpscalerComboBox->addItem(tr(option.first), option.second);
         ui->AntiAliasingComboBox->addItem(tr(option.first), option.second);
     }
     ui->AntiAliasingComboBox->addItem("PSMAA", 3);
     ui->AntiAliasingComboBox->addItem("CMAA2", 4);
-    ui->AntiAliasingComboBox->addItem("TDAA", 5);
     ui->SharpeningComboBox->addItem(tr("None"), 0);
     ui->SharpeningComboBox->addItem("RCAS", 1);
 

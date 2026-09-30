@@ -30,6 +30,13 @@ static void MigratePostFx(json& config, bool legacy_fsr, bool legacy_rcas) {
         (gpu.contains("fsr_enabled") || gpu.contains("rcas_enabled"))) {
         gpu["sharpening"] = enabled && gpu.value("rcas_enabled", legacy_rcas) ? 1 : 0;
     }
+    if (const auto it = gpu.find("upscaler"); it != gpu.end() && *it != 0 && *it != 1) {
+        *it = 0;
+    }
+    if (const auto it = gpu.find("anti_aliasing");
+        it != gpu.end() && *it != 0 && *it != 1 && *it != 3 && *it != 4) {
+        *it = 0;
+    }
 }
 
 // ── Singleton storage ─────────────────────────────────────────────────
