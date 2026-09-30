@@ -1188,23 +1188,27 @@
             <item>
              <widget class="QGroupBox" name="FSRGroupBox">
               <property name="title">
-               <string>FSR Settings</string>
+               <string>Image Processing</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_5">
                <item>
-                <widget class="QCheckBox" name="FSRCheckBox">
-                 <property name="text">
-                  <string>Enable FSR</string>
-                 </property>
+                <widget class="QLabel" name="AntiAliasingLabel">
+                 <property name="text"><string>Anti-aliasing</string></property>
                 </widget>
                </item>
+               <item><widget class="QComboBox" name="AntiAliasingComboBox"/></item>
                <item>
-                <widget class="QCheckBox" name="RCASCheckBox">
-                 <property name="text">
-                  <string>Enable RCAS (sharpening)</string>
-                 </property>
+                <widget class="QLabel" name="UpscalerLabel">
+                 <property name="text"><string>Upscaler / Downscaler</string></property>
                 </widget>
                </item>
+               <item><widget class="QComboBox" name="UpscalerComboBox"/></item>
+               <item>
+                <widget class="QLabel" name="SharpeningLabel">
+                 <property name="text"><string>Sharpening</string></property>
+                </widget>
+               </item>
+               <item><widget class="QComboBox" name="SharpeningComboBox"/></item>
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_10">
                  <item>

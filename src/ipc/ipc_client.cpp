@@ -75,6 +75,14 @@ void IpcClient::adjustVol(int volume, bool is_game_specific) {
     writeLine(is_game_specific ? "1" : "0");
 }
 
+void IpcClient::setPostFx(int upscaler, int aa, int sharpening, int attenuation) {
+    writeLine("SET_POSTFX");
+    writeLine(QString::number(upscaler));
+    writeLine(QString::number(aa));
+    writeLine(QString::number(sharpening));
+    writeLine(QString::number(attenuation));
+}
+
 void IpcClient::setFsr(bool enable) {
     writeLine("SET_FSR");
     writeLine(enable ? "1" : "0");

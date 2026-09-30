@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QHoverEvent>
 #include <QMessageBox>
+#include <QSignalBlocker>
 #include <SDL3/SDL.h>
 #include <fmt/format.h>
 
@@ -140,6 +141,16 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
       gs_serial(gsc_serial) {
 
     ui->setupUi(this);
+    for (const auto& option : {std::pair{"None", 0}, {"FSR1", 1}, {"GSR1", 2}}) {
+        ui->UpscalerComboBox->addItem(tr(option.first), option.second);
+        ui->AntiAliasingComboBox->addItem(tr(option.first), option.second);
+    }
+    ui->AntiAliasingComboBox->addItem("PSMAA", 3);
+    ui->AntiAliasingComboBox->addItem("CMAA2", 4);
+    ui->AntiAliasingComboBox->addItem("TDAA", 5);
+    ui->SharpeningComboBox->addItem(tr("None"), 0);
+    ui->SharpeningComboBox->addItem("RCAS", 1);
+
     ui->tabWidgetSettings->setUsesScrollButtons(false);
     GetPhysicalDevices();
 
@@ -513,25 +524,19 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         ui->RCASValue->setText(RCASValue);
     });
 
-    if (EmulatorState::GetInstance()->IsGameRunning()) {
-        connect(ui->RCASSlider, &QSlider::valueChanged, this, [this](int value) {
-            if (is_game_specific == EmulatorState::GetInstance()->IsGameSpecifigConfigUsed()) {
-                m_ipc_client->setRcasAttenuation(value);
-            }
-        });
-        connect(ui->FSRCheckBox, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState state) {
-            if (is_game_specific == EmulatorState::GetInstance()->IsGameSpecifigConfigUsed()) {
-                m_ipc_client->setFsr(state);
-            }
-        });
-
-        connect(
-            ui->RCASCheckBox, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState state) {
-                if (is_game_specific == EmulatorState::GetInstance()->IsGameSpecifigConfigUsed()) {
-                    m_ipc_client->setRcas(state);
-                }
-            });
+    const auto send_postfx = [this] {
+        if (EmulatorState::GetInstance()->IsGameRunning() &&
+            is_game_specific == EmulatorState::GetInstance()->IsGameSpecifigConfigUsed()) {
+            m_ipc_client->setPostFx(ui->UpscalerComboBox->currentData().toInt(),
+                                   ui->AntiAliasingComboBox->currentData().toInt(),
+                                   ui->SharpeningComboBox->currentData().toInt(),
+                                   ui->RCASSlider->value());
+        }
+    };
+    for (auto* combo : {ui->UpscalerComboBox, ui->AntiAliasingComboBox, ui->SharpeningComboBox}) {
+        connect(combo, &QComboBox::currentIndexChanged, this, send_postfx);
     }
+    connect(ui->RCASSlider, &QSlider::valueChanged, this, send_postfx);
 
     // Descriptions
     {
@@ -769,8 +774,16 @@ void SettingsDialog::LoadValuesFromConfig() {
     ui->dumpShadersCheckBox->setChecked(EmulatorSettings.IsDumpShaders());
     ui->nullGpuCheckBox->setChecked(EmulatorSettings.IsNullGPU());
     ui->enableHDRCheckBox->setChecked(EmulatorSettings.IsHdrAllowed());
-    ui->FSRCheckBox->setChecked(EmulatorSettings.IsFsrEnabled());
-    ui->RCASCheckBox->setChecked(EmulatorSettings.IsRcasEnabled());
+    const QSignalBlocker upscaler_blocker(ui->UpscalerComboBox);
+    const QSignalBlocker aa_blocker(ui->AntiAliasingComboBox);
+    const QSignalBlocker sharpening_blocker(ui->SharpeningComboBox);
+    const QSignalBlocker attenuation_blocker(ui->RCASSlider);
+    ui->UpscalerComboBox->setCurrentIndex(
+        ui->UpscalerComboBox->findData(EmulatorSettings.GetUpscaler()));
+    ui->AntiAliasingComboBox->setCurrentIndex(
+        ui->AntiAliasingComboBox->findData(EmulatorSettings.GetAntiAliasing()));
+    ui->SharpeningComboBox->setCurrentIndex(
+        ui->SharpeningComboBox->findData(EmulatorSettings.GetSharpening()));
     ui->RCASSlider->setValue(EmulatorSettings.GetRcasAttenuation());
     ui->RCASValue->setText(QString::number(ui->RCASSlider->value() / 1000.0, 'f', 3));
 
@@ -1240,8 +1253,9 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
     EmulatorSettings.SetWindowHeight(ui->heightSpinBox->value(), is_specific);
     EmulatorSettings.SetDumpShaders(ui->dumpShadersCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetNullGPU(ui->nullGpuCheckBox->isChecked(), is_specific);
-    EmulatorSettings.SetFsrEnabled(ui->FSRCheckBox->isChecked(), is_specific);
-    EmulatorSettings.SetRcasEnabled(ui->RCASCheckBox->isChecked(), is_specific);
+    EmulatorSettings.SetUpscaler(ui->UpscalerComboBox->currentData().toInt(), is_specific);
+    EmulatorSettings.SetAntiAliasing(ui->AntiAliasingComboBox->currentData().toInt(), is_specific);
+    EmulatorSettings.SetSharpening(ui->SharpeningComboBox->currentData().toInt(), is_specific);
     EmulatorSettings.SetRcasAttenuation(ui->RCASSlider->value(), is_specific);
     EmulatorSettings.SetShowSplash(ui->showSplashCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetDebugDump(ui->debugDump->isChecked(), is_specific);
@@ -1348,9 +1362,8 @@ void SettingsDialog::SyncRealTimeWidgetstoConfig() {
     ui->horizontalVolumeSlider->setValue(EmulatorSettings.GetVolumeSlider());
 
     if (EmulatorState::GetInstance()->IsGameRunning()) {
-        m_ipc_client->setFsr(EmulatorSettings.IsFsrEnabled());
-        m_ipc_client->setRcas(EmulatorSettings.IsRcasEnabled());
-        m_ipc_client->setRcasAttenuation(EmulatorSettings.GetRcasAttenuation());
+        m_ipc_client->setPostFx(EmulatorSettings.GetUpscaler(), EmulatorSettings.GetAntiAliasing(),
+                               EmulatorSettings.GetSharpening(), EmulatorSettings.GetRcasAttenuation());
     }
 }
 

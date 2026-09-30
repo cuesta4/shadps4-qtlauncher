@@ -28,6 +28,7 @@ public:
     void restartEmulator();
     void toggleFullscreen();
     void adjustVol(int volume, bool game_specific);
+    void setPostFx(int upscaler, int aa, int sharpening, int attenuation);
     void setFsr(bool enable);
     void setRcas(bool enable);
     void setRcasAttenuation(int value);

@@ -438,6 +438,9 @@ struct GPUSettings {
     Setting<std::string> present_mode{"Mailbox"};
     Setting<bool> enable_reflex{false};
     Setting<bool> hdr_allowed{false};
+    Setting<int> upscaler{0};
+    Setting<int> anti_aliasing{0};
+    Setting<int> sharpening{0};
     Setting<bool> fsr_enabled{false};
     Setting<bool> rcas_enabled{true};
     Setting<int> rcas_attenuation{250};
@@ -453,6 +456,9 @@ struct GPUSettings {
             make_override<GPUSettings>("window_height", &GPUSettings::window_height),
             make_override<GPUSettings>("window_width", &GPUSettings::window_width),
             make_override<GPUSettings>("hdr_allowed", &GPUSettings::hdr_allowed),
+            make_override<GPUSettings>("upscaler", &GPUSettings::upscaler),
+            make_override<GPUSettings>("anti_aliasing", &GPUSettings::anti_aliasing),
+            make_override<GPUSettings>("sharpening", &GPUSettings::sharpening),
             make_override<GPUSettings>("fsr_enabled", &GPUSettings::fsr_enabled),
             make_override<GPUSettings>("rcas_enabled", &GPUSettings::rcas_enabled),
             make_override<GPUSettings>("rcas_attenuation", &GPUSettings::rcas_attenuation),
@@ -474,7 +480,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPUSettings, window_width, window_height, int
                                    direct_memory_access_enabled, enable_predication,
                                    dump_shaders, patch_shaders,
                                    vblank_frequency, full_screen, full_screen_mode, present_mode,
-                                   enable_reflex, hdr_allowed, fsr_enabled, rcas_enabled, rcas_attenuation)
+                                   enable_reflex, hdr_allowed, upscaler, anti_aliasing, sharpening,
+                                   fsr_enabled, rcas_enabled, rcas_attenuation)
 // -------------------------------
 // Vulkan settings
 // -------------------------------
@@ -759,6 +766,9 @@ public:
     SETTING_FORWARD(m_gpu, InternalScreenHeight, internal_screen_height)
     SETTING_FORWARD(m_gpu, InternalScreenWidth, internal_screen_width)
     SETTING_FORWARD_BOOL(m_gpu, HdrAllowed, hdr_allowed)
+    SETTING_FORWARD(m_gpu, Upscaler, upscaler)
+    SETTING_FORWARD(m_gpu, AntiAliasing, anti_aliasing)
+    SETTING_FORWARD(m_gpu, Sharpening, sharpening)
     SETTING_FORWARD_BOOL(m_gpu, FsrEnabled, fsr_enabled)
     SETTING_FORWARD_BOOL(m_gpu, RcasEnabled, rcas_enabled)
     SETTING_FORWARD(m_gpu, RcasAttenuation, rcas_attenuation)

@@ -17,6 +17,21 @@
 
 using json = nlohmann::json;
 
+static void MigratePostFx(json& config, bool legacy_fsr, bool legacy_rcas) {
+    if (!config.contains("GPU")) {
+        return;
+    }
+    auto& gpu = config["GPU"];
+    const bool enabled = gpu.value("fsr_enabled", legacy_fsr);
+    if (!gpu.contains("upscaler") && gpu.contains("fsr_enabled")) {
+        gpu["upscaler"] = enabled ? 1 : 0;
+    }
+    if (!gpu.contains("sharpening") &&
+        (gpu.contains("fsr_enabled") || gpu.contains("rcas_enabled"))) {
+        gpu["sharpening"] = enabled && gpu.value("rcas_enabled", legacy_rcas) ? 1 : 0;
+    }
+}
+
 // ── Singleton storage ─────────────────────────────────────────────────
 std::shared_ptr<EmulatorSettingsImpl> EmulatorSettingsImpl::s_instance = nullptr;
 std::mutex EmulatorSettingsImpl::s_mutex;
@@ -399,6 +414,7 @@ bool EmulatorSettingsImpl::Load(const std::string& serial) {
             if (std::ifstream in{configPath}; in.good()) {
                 json gj;
                 in >> gj;
+                MigratePostFx(gj, m_gpu.fsr_enabled.get(), m_gpu.rcas_enabled.get());
 
                 auto mergeGroup = [&gj](auto& group, const char* section) {
                     if (!gj.contains(section))
@@ -475,6 +491,7 @@ bool EmulatorSettingsImpl::Load(const std::string& serial) {
 
             json gj;
             in >> gj;
+            MigratePostFx(gj, m_gpu.upscaler.get() == 1, m_gpu.sharpening.get() == 1);
 
             std::vector<std::string> changed;
 
@@ -646,6 +663,8 @@ bool EmulatorSettingsImpl::TransferSettings() {
         setFromToml(s.fsr_enabled, gpu, "fsrEnabled");
         setFromToml(s.rcas_enabled, gpu, "rcasEnabled");
         setFromToml(s.rcas_attenuation, gpu, "rcasAttenuation");
+        s.upscaler.set(s.fsr_enabled.get() ? 1 : 0);
+        s.sharpening.set(s.fsr_enabled.get() && s.rcas_enabled.get() ? 1 : 0);
     }
 
     if (og_data.contains("Vulkan")) {
