@@ -1426,6 +1426,7 @@ void SettingsDialog::RefreshAudioDevices() {
     ui->micComboBox->addItem(micMap.key("Default Device"), "Default Device");
     ui->GenAudioComboBox->addItem(tr("Default Device"), "Default Device");
     ui->DsAudioComboBox->addItem(tr("Default Device"), "Default Device");
+    ui->DsAudioComboBox->addItem(QStringLiteral("None"), QStringLiteral("None"));
 
     if (backend == "SDL") {
         // Playback
