@@ -744,6 +744,7 @@ void SettingsDialog::LoadValuesFromConfig() {
         EmulatorSettings.IsApp0ReadDisableTimeStretching());
     ui->readbackLinearImagesCheckBox->setChecked(EmulatorSettings.IsReadbackLinearImagesEnabled());
     ui->dmaCheckBox->setChecked(EmulatorSettings.IsDirectMemoryAccessEnabled());
+    ui->nvRawAccessChainsCheckBox->setChecked(EmulatorSettings.IsNvRawAccessChainsEnabled());
     ui->enablePredicationCheckBox->setChecked(EmulatorSettings.IsEnablePredication());
     ui->neoCheckBox->setChecked(EmulatorSettings.IsNeo());
     ui->devkitCheckBox->setChecked(EmulatorSettings.IsDevKit());
@@ -1179,6 +1180,8 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
     EmulatorSettings.SetReadbackLinearImagesEnabled(ui->readbackLinearImagesCheckBox->isChecked(),
                                                     is_specific);
     EmulatorSettings.SetDirectMemoryAccessEnabled(ui->dmaCheckBox->isChecked(), is_specific);
+    EmulatorSettings.SetNvRawAccessChainsEnabled(ui->nvRawAccessChainsCheckBox->isChecked(),
+                                                is_specific);
     EmulatorSettings.SetEnablePredication(ui->enablePredicationCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetDevKit(ui->devkitCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetNeo(ui->neoCheckBox->isChecked(), is_specific);
