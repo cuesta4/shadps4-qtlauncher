@@ -499,6 +499,7 @@ struct VulkanSettings {
     Setting<bool> pipeline_cache_archived{false};
     Setting<bool> async_shader_recompiling{false};
     Setting<bool> use_nv_raw_access_chains{false};
+    Setting<bool> force_uniform_buffers{false};
     Setting<bool> validation_logger_enabled{false};
     // Guest frames the GPU may lag behind the command processor; 0 leaves the GPU unbounded.
     Setting<u32> gpu_frames_ahead{2};
@@ -526,6 +527,8 @@ struct VulkanSettings {
                                           &VulkanSettings::async_shader_recompiling),
             make_override<VulkanSettings>("use_nv_raw_access_chains",
                                           &VulkanSettings::use_nv_raw_access_chains),
+            make_override<VulkanSettings>("force_uniform_buffers",
+                                          &VulkanSettings::force_uniform_buffers),
             make_override<VulkanSettings>("validation_logger_enabled",
                                           &VulkanSettings::validation_logger_enabled),
             make_override<VulkanSettings>("gpu_frames_ahead", &VulkanSettings::gpu_frames_ahead),
@@ -538,7 +541,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VulkanSettings, gpu_id, renderdoc_enabled, vk
                                    vkhost_markers, vkguest_markers, pipeline_cache_enabled,
                                    pipeline_cache_archived, async_shader_recompiling,
                                    validation_logger_enabled, gpu_frames_ahead,
-                                   use_nv_raw_access_chains)
+                                   use_nv_raw_access_chains, force_uniform_buffers)
 
 // -------------------------------
 // Main manager
@@ -827,6 +830,7 @@ public:
     SETTING_FORWARD_BOOL(m_vulkan, PipelineCacheArchived, pipeline_cache_archived)
     SETTING_FORWARD_BOOL(m_vulkan, AsyncShaderRecompiling, async_shader_recompiling)
     SETTING_FORWARD_BOOL(m_vulkan, NvRawAccessChainsEnabled, use_nv_raw_access_chains)
+    SETTING_FORWARD_BOOL(m_vulkan, UniformBufferShadersEnabled, force_uniform_buffers)
     SETTING_FORWARD_BOOL(m_vulkan, ValidationLoggerEnabled, validation_logger_enabled)
     SETTING_FORWARD(m_vulkan, GpuFramesAhead, gpu_frames_ahead)
 

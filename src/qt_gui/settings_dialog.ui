@@ -2451,6 +2451,12 @@
                      <property name="toolTip"><string>Optimize storage buffer shader accesses on supported NVIDIA drivers. Takes effect when the game starts.</string></property>
                     </widget>
                    </item>
+                   <item row="4" column="0" colspan="2">
+                    <widget class="QCheckBox" name="uniformBufferShadersCheckBox">
+                     <property name="text"><string>Force UBO Shaders</string></property>
+                     <property name="toolTip"><string>Use uniform buffers for all eligible read-only shader buffers. May improve GPU performance or increase CPU cost. Takes effect when the game starts.</string></property>
+                    </widget>
+                   </item>
                  </layout>
                 </widget>
                </item>
