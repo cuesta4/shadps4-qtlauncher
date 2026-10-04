@@ -574,6 +574,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         ui->windowSizeGroupBox->installEventFilter(this);
         ui->presentModeGroupBox->installEventFilter(this);
         ui->enableReflexCheckBox->installEventFilter(this);
+        ui->vrrPacingCheckBox->installEventFilter(this);
         ui->heightDivider->installEventFilter(this);
         ui->nullGpuCheckBox->installEventFilter(this);
         ui->enableHDRCheckBox->installEventFilter(this);
@@ -818,6 +819,7 @@ void SettingsDialog::LoadValuesFromConfig() {
     QString translatedText_PresentMode = presentModeMap.key(QString::fromStdString(presentMode));
     ui->presentModeComboBox->setCurrentText(translatedText_PresentMode);
     ui->enableReflexCheckBox->setChecked(EmulatorSettings.IsReflexEnabled());
+    ui->vrrPacingCheckBox->setChecked(EmulatorSettings.IsVrrPacingEnabled());
 
     // Log
     ui->logAppendCheckBox->setChecked(EmulatorSettings.IsLogAppend());
@@ -1037,6 +1039,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
                   "Mailbox: Frames synchronize with your screen's refresh rate. New frames will replace any pending frames. Reduces latency but may skip frames if running behind.\\n"
                   "Fifo: Frames synchronize with your screen's refresh rate. New frames will be queued behind pending frames. Ensures all frames are presented but may increase latency.\\n"
                   "Immediate: Frames immediately present to your screen when ready. May result in tearing.");
+    } else if (elementName == "vrrPacingCheckBox") {
+        text = tr("VRR Frame Pacing:\\nFor G-Sync and FreeSync displays. Waits until the GPU has finished each frame and presents it at a fixed time after its vblank, so the display shows frames at even intervals instead of whenever the GPU finishes them. Adds a few milliseconds of input latency.\\nIgnored on a display with a fixed refresh rate, which paces the frames itself.");
     } else if (elementName == "enableReflexCheckBox") {
         text = tr("Enable NVIDIA Reflex:\\nHolds the emulated GPU command processor back until the host GPU is about to need the next frame, so frames do not wait in a queue in front of the GPU. Lowers input latency when the game is limited by the GPU.\\nRequires an NVIDIA GPU and driver with VK_NV_low_latency2; ignored otherwise.");
     } else if (elementName == "windowSizeGroupBox") {
@@ -1215,6 +1219,7 @@ void SettingsDialog::UpdateSettings(bool is_specific) {
     EmulatorSettings.SetPresentMode(
         presentModeMap.value(ui->presentModeComboBox->currentText()).toStdString(), is_specific);
     EmulatorSettings.SetReflexEnabled(ui->enableReflexCheckBox->isChecked(), is_specific);
+    EmulatorSettings.SetVrrPacingEnabled(ui->vrrPacingCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetMotionControlsEnabled(ui->motionControlsCheckBox->isChecked(), is_specific);
     EmulatorSettings.SetBackgroundControllerInput(ui->backgroundControllerCheckBox->isChecked(),
                                                   is_specific);

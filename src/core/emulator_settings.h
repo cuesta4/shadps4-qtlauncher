@@ -437,6 +437,8 @@ struct GPUSettings {
     Setting<std::string> full_screen_mode{"Windowed"};
     Setting<std::string> present_mode{"Mailbox"};
     Setting<bool> enable_reflex{false};
+    // Presents each finished frame at an even delay after its vblank on a VRR display.
+    Setting<bool> vrr_pacing{false};
     Setting<bool> hdr_allowed{false};
     Setting<int> upscaler{0};
     Setting<int> anti_aliasing{0};
@@ -453,6 +455,7 @@ struct GPUSettings {
             make_override<GPUSettings>("full_screen_mode", &GPUSettings::full_screen_mode),
             make_override<GPUSettings>("present_mode", &GPUSettings::present_mode),
             make_override<GPUSettings>("enable_reflex", &GPUSettings::enable_reflex),
+            make_override<GPUSettings>("vrr_pacing", &GPUSettings::vrr_pacing),
             make_override<GPUSettings>("window_height", &GPUSettings::window_height),
             make_override<GPUSettings>("window_width", &GPUSettings::window_width),
             make_override<GPUSettings>("hdr_allowed", &GPUSettings::hdr_allowed),
@@ -480,8 +483,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GPUSettings, window_width, window_height, int
                                    direct_memory_access_enabled, enable_predication,
                                    dump_shaders, patch_shaders,
                                    vblank_frequency, full_screen, full_screen_mode, present_mode,
-                                   enable_reflex, hdr_allowed, upscaler, anti_aliasing, sharpening,
-                                   fsr_enabled, rcas_enabled, rcas_attenuation)
+                                   enable_reflex, vrr_pacing, hdr_allowed, upscaler, anti_aliasing,
+                                   sharpening, fsr_enabled, rcas_enabled, rcas_attenuation)
 // -------------------------------
 // Vulkan settings
 // -------------------------------
@@ -768,6 +771,7 @@ public:
     SETTING_FORWARD(m_gpu, FullScreenMode, full_screen_mode)
     SETTING_FORWARD(m_gpu, PresentMode, present_mode)
     SETTING_FORWARD_BOOL(m_gpu, ReflexEnabled, enable_reflex)
+    SETTING_FORWARD_BOOL(m_gpu, VrrPacingEnabled, vrr_pacing)
     SETTING_FORWARD(m_gpu, WindowHeight, window_height)
     SETTING_FORWARD(m_gpu, WindowWidth, window_width)
     SETTING_FORWARD(m_gpu, InternalScreenHeight, internal_screen_height)

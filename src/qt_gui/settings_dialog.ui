@@ -1075,6 +1075,13 @@
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QCheckBox" name="vrrPacingCheckBox">
+                    <property name="text">
+                     <string>VRR Frame Pacing</string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </widget>
                </item>
