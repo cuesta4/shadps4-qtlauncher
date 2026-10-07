@@ -92,6 +92,8 @@ int backgroundImageOpacitySlider_backup;
 int bgm_volume_backup;
 
 static std::vector<QString> m_physical_devices;
+static std::vector<bool> m_nvidia_devices;
+static int m_auto_device = -1; // First discrete GPU, which the emulator prefers on Auto Select.
 
 void LogUpdateLevels() {
     spdlog::level default_log_level = spdlog::level::info;
@@ -536,6 +538,8 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         connect(combo, &QComboBox::currentIndexChanged, this, send_postfx);
     }
     connect(ui->RCASSlider, &QSlider::valueChanged, this, send_postfx);
+    connect(ui->graphicsAdapterBox, &QComboBox::currentIndexChanged, this,
+            &SettingsDialog::UpdateNvidiaOnlyOptions);
 
     // Descriptions
     {
@@ -578,6 +582,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         ui->heightDivider->installEventFilter(this);
         ui->nullGpuCheckBox->installEventFilter(this);
         ui->enableHDRCheckBox->installEventFilter(this);
+        ui->FSRGroupBox->installEventFilter(this);
         ui->chooseHomeTabGroupBox->installEventFilter(this);
 
         // Paths
@@ -629,6 +634,8 @@ SettingsDialog::SettingsDialog(std::shared_ptr<gui_settings> gui_settings,
         ui->readbackLinearImagesCheckBox->installEventFilter(this);
         ui->dumpShadersCheckBox->installEventFilter(this);
         ui->dmaCheckBox->installEventFilter(this);
+        ui->nvRawAccessChainsCheckBox->installEventFilter(this);
+        ui->uniformBufferShadersCheckBox->installEventFilter(this);
         ui->devkitCheckBox->installEventFilter(this);
         ui->neoCheckBox->installEventFilter(this);
         ui->networkConnectedCheckBox->installEventFilter(this);
@@ -771,6 +778,7 @@ void SettingsDialog::LoadValuesFromConfig() {
     // First options is auto selection -1, so gpuId on the GUI will always have to subtract 1
     // when setting and add 1 when getting to select the correct gpu in Qt
     ui->graphicsAdapterBox->setCurrentIndex(EmulatorSettings.GetGpuId() + 1);
+    UpdateNvidiaOnlyOptions();
     ui->widthSpinBox->setValue(EmulatorSettings.GetWindowWidth());
     ui->heightSpinBox->setValue(EmulatorSettings.GetWindowHeight());
     ui->dumpShadersCheckBox->setChecked(EmulatorSettings.IsDumpShaders());
@@ -982,6 +990,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Background Image:\\nControl the opacity of the game background image.");
     } else if (elementName == "GUIMusicGroupBox") {
         text = tr("Play Title Music:\\nIf a game supports it, enable playing special music when selecting the game in the GUI.");
+    } else if (elementName == "FSRGroupBox") {
+        text = tr("Image Processing: Post-processing applied to the final image, changeable while the game runs. Anti-aliasing smooths jagged edges (PSMAA, CMAA2, or FSR1 at native size). Upscaler / Downscaler resizes the game image to the window with FSR1. Sharpening applies RCAS; lower attenuation sharpens more.");
     } else if (elementName == "enableHDRCheckBox") {
         text = tr("Enable HDR:\\nEnables HDR in games that support it.\\nYour monitor must have support for the BT2020 PQ color space and the RGB10A2 swapchain format.");
     } else if (elementName == "disableTrophycheckBox") {
@@ -1040,9 +1050,9 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
                   "Fifo: Frames synchronize with your screen's refresh rate. New frames will be queued behind pending frames. Ensures all frames are presented but may increase latency.\\n"
                   "Immediate: Frames immediately present to your screen when ready. May result in tearing.");
     } else if (elementName == "vrrPacingCheckBox") {
-        text = tr("VRR Frame Pacing:\\nFor G-Sync and FreeSync displays. Waits until the GPU has finished each frame and presents it at a fixed time after its vblank, so the display shows frames at even intervals instead of whenever the GPU finishes them. Adds a few milliseconds of input latency.\\nIgnored on a display with a fixed refresh rate, which paces the frames itself.");
+        text = tr("VRR Frame Pacing: For G-Sync/FreeSync displays. Presents each finished frame at a fixed time after vblank, so frames reach the screen at even intervals instead of whenever the GPU finishes them. Smoother motion for a few milliseconds of input latency. Ignored on fixed refresh rate displays.");
     } else if (elementName == "enableReflexCheckBox") {
-        text = tr("Enable NVIDIA Reflex:\\nHolds the emulated GPU command processor back until the host GPU is about to need the next frame, so frames do not wait in a queue in front of the GPU. Lowers input latency when the game is limited by the GPU.\\nRequires an NVIDIA GPU and driver with VK_NV_low_latency2; ignored otherwise.");
+        text = tr("Enable NVIDIA Reflex: NVIDIA only. Holds the next emulated frame back until the GPU is about to need it, so frames do not wait in a queue. Lowers input latency when the GPU is the bottleneck. Ignored on GPUs or drivers without VK_NV_low_latency2.");
     } else if (elementName == "windowSizeGroupBox") {
         text = tr("Width/Height:\\nSets the size of the emulator window at launch, which can be resized during gameplay.\\nThis is different from the in-game resolution.");
     } else if (elementName == "heightDivider") {
@@ -1120,7 +1130,11 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     }
 
     // Experimental
-    if (elementName == "dmaCheckBox") {
+    if (elementName == "nvRawAccessChainsCheckBox") {
+        text = tr("Raw Access Chains: NVIDIA only, unavailable on other GPUs. Reads storage buffers in shaders through VK_NV_raw_access_chains. No measured performance gain so far and known to break effects (e.g. smoke in Dead Nation); leave it off unless testing. Restart the game after changing this option.");
+    } else if (elementName == "uniformBufferShadersCheckBox") {
+        text = tr("Force UBO Shaders: NVIDIA only, unavailable on other GPUs. Reads constant data in shaders through uniform buffers, which NVIDIA serves from a faster constant cache. Can raise GPU performance in shader-heavy scenes at a small CPU cost. Restart the game after changing this option.");
+    } else if (elementName == "dmaCheckBox") {
         text = tr("Enable Direct Memory Access:\\nEnables arbitrary memory access from the GPU to CPU memory.");
     } else if (elementName == "neoCheckBox") {
         text = tr("Enable PS4 Neo Mode:\\nAdds support for PS4 Pro emulation and memory size. Currently causes instability in a large number of tested games.");
@@ -1133,21 +1147,19 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "shaderCacheArchiveCheckBox") {
         text = tr("Compress the Shader Cache files into a zip file:\\nThe shader cache files are stored within a single zip file instead of multiple separate files.");
     } else if (elementName == "asyncShaderRecompilingCheckBox") {
-        text = tr("Async Shader Recompiling:\\nCompiles graphics shaders and pipelines in the background to reduce stutter. May cause visual issues or instability in some games. Restart required.");
+        text = tr("Async Shader Recompiling: Compiles new shaders in the background instead of pausing the game, which removes most compilation stutter. Objects using a shader still being compiled are skipped for a few frames, so they may pop in late. May cause instability in some games. Restart the game after changing this option.");
     } else if (elementName == "shadnetCheckBox") {
         text = tr("shadNet:\\nCompatibility is very limited at the moment.\\nYou can register at https://www.shadps4.net/shadnet/register/.");
     } else if (elementName == "readbacksGroupBox") {
         text = tr("Readbacks:\\nEnable GPU memory readbacks and writebacks.\\nThis is required for proper behavior in some games.\\nMight cause stability and/or performance issues.");
     } else if (elementName == "hddReadSpeedGroupBox") {
-        text = tr("Simulates the PS4's HDD read speed for compatibility.\n"
-                  "Enter a custom bandwidth in MiB/s. Values from 1 to 49 are automatically "
-                  "raised to 50 MiB/s.\n0 and values above 200 use unlimited/native speed.");
+        text = tr("HDD Read Speed: Limits game file reads to a PS4-like HDD speed in MiB/s, for games that break when loading is instant. 0 = unlimited (default). Values below 50 become 50; values above 200 count as unlimited.");
     } else if (elementName == "gpuFramesAheadGroupBox") {
-        text = tr("GPU Frames Ahead:\\nLimits how many frames the GPU may fall behind the emulation. Lower values reduce latency and stutter when the GPU is the bottleneck; 0 removes the limit.\\nDefault: 2. Restart the game after changing this option.");
+        text = tr("GPU Frames Ahead: How many frames the GPU may fall behind the emulation. Lower values reduce input latency and stutter when the GPU is the bottleneck; higher values absorb uneven frame times. 0 removes the limit. Default: 2. Restart the game after changing this option.");
     } else if (elementName == "app0DisableTimeStretchingCheckBox") {
-        text = tr("Disable Time Dilation:\\nKeeps simulated HDD delays tied to real time when emulation slows down.");
+        text = tr("Disable Time Dilation: By default the simulated HDD reads slow down together with the game when emulation runs below full speed. Enable to keep them at real-time speed: loading is faster, but the timing no longer follows the game speed.");
     } else if (elementName == "enablePredicationCheckBox") {
-        text = tr("GPU-Side Predication:\\nEnables the GPU implementation of IT_SET_PREDICATION.\\nDisable it for titles that regress with conditional rendering. Restart the game after changing this option.");
+        text = tr("Enable Predication Handling: Runs the game's conditional rendering (IT_SET_PREDICATION, used to skip hidden objects) on the GPU. Disable it if a game shows missing or flickering objects. Restart the game after changing this option.");
     } else if (elementName == "readbackLinearImagesCheckBox") {
         text = tr("Enable Readback Linear Images:\\nEnables async downloading of GPU modified linear images.\\nMight fix issues in some games.");
     } else if (elementName == "dmemGroupBox") {
@@ -1156,6 +1168,16 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
 
     // clang-format on
     ui->descriptionText->setText(text.replace("\\n", "\n"));
+}
+
+void SettingsDialog::UpdateNvidiaOnlyOptions() {
+    const int index = ui->graphicsAdapterBox->currentIndex() - 1;
+    const size_t device = index >= 0 ? index : std::max(m_auto_device, 0);
+    const bool nvidia = device < m_nvidia_devices.size() && m_nvidia_devices[device];
+    for (auto* box : {ui->nvRawAccessChainsCheckBox, ui->uniformBufferShadersCheckBox}) {
+        box->setEnabled(nvidia);
+        box->setChecked(box->isChecked() && nvidia);
+    }
 }
 
 bool SettingsDialog::eventFilter(QObject* obj, QEvent* event) {
@@ -1565,6 +1587,10 @@ void SettingsDialog::GetPhysicalDevices() {
         vkGetPhysicalDeviceProperties(devices[i], &props);
         QString name = QString::fromUtf8(props.deviceName, -1);
         m_physical_devices.push_back(name);
+        m_nvidia_devices.push_back(props.vendorID == 0x10DE);
+        if (m_auto_device < 0 && props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            m_auto_device = static_cast<int>(i);
+        }
     }
 
     vkDestroyInstance(instance, nullptr);

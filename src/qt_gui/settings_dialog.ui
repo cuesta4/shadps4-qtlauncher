@@ -2415,24 +2415,96 @@
         <item>
          <layout class="QVBoxLayout" name="experimentalVLayout">
           <item>
-           <layout class="QHBoxLayout" name="experimentalHLayout" stretch="1,1,1">
-             <item>
-              <layout class="QVBoxLayout" name="renderingGroupsLayout">
-               <item>
-                 <widget class="QGroupBox" name="memoryReadbacksGroupBox">
-                  <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                  <property name="title"><string>Memory and Readbacks</string></property>
-                  <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                  <layout class="QFormLayout" name="memoryReadbacksLayout">
-                   <property name="sizeConstraint"><enum>QLayout::SizeConstraint::SetDefaultConstraint</enum></property>
-                   <property name="fieldGrowthPolicy"><enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum></property>
-                   <property name="labelAlignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set></property>
-                   <property name="horizontalSpacing"><number>6</number></property>
-                   <property name="verticalSpacing"><number>6</number></property>
-                   <property name="leftMargin"><number>9</number></property>
-                   <property name="topMargin"><number>0</number></property>
-                   <property name="bottomMargin"><number>12</number></property>
-                   <item row="0" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="experimentalHLayout" stretch="1,1,1,1">
+<item>
+<layout class="QVBoxLayout" name="experimentalColumn1">
+<item>
+<widget class="QGroupBox" name="memoryGroupBox">
+<property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+<property name="title"><string>Memory</string></property>
+<layout class="QVBoxLayout" name="memoryGroupBoxLayout">
+<property name="spacing"><number>6</number></property>
+<property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+<item>
+                <widget class="QGroupBox" name="dmemGroupBox">
+                 <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+                <property name="title">
+                 <string>Additional DMem Allocation</string>
+                 </property>
+                 <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
+                 <layout class="QVBoxLayout" name="verticalLayout_4">
+                  <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+                 <item>
+                  <widget class="QSpinBox" name="dmemSpinBox">
+                   <property name="frame">
+                    <bool>true</bool>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+                   </property>
+                   <property name="specialValueText">
+                    <string/>
+                   </property>
+                   <property name="accelerated">
+                    <bool>true</bool>
+                   </property>
+                   <property name="correctionMode">
+                    <enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum>
+                   </property>
+                   <property name="keyboardTracking">
+                    <bool>false</bool>
+                   </property>
+                   <property name="suffix">
+                    <string notr="true">MB</string>
+                   </property>
+                   <property name="minimum">
+                    <number>0</number>
+                   </property>
+                   <property name="maximum">
+                    <number>100000</number>
+                   </property>
+                   <property name="value">
+                    <number>0</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+</item>
+<item>
+               <widget class="QGroupBox" name="redZoneGroupBox">
+                <property name="title">
+                 <string>Red Zone Protection</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_20">
+                 <item>
+                  <widget class="QComboBox" name="redZoneComboBox">
+                   <item>
+                    <property name="text">
+                     <string>Disabled</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Static Patching</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+</item>
+</layout>
+</widget>
+</item>
+<item>
+<widget class="QGroupBox" name="gpuMemoryGroupBox">
+<property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+<property name="title"><string>GPU Memory Access</string></property>
+<layout class="QVBoxLayout" name="gpuMemoryGroupBoxLayout">
+<property name="spacing"><number>6</number></property>
+<property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+<item>
                    <widget class="QWidget" name="readbacksGroupBox" native="true">
                     <layout class="QVBoxLayout" name="verticalLayout_7">
                      <property name="leftMargin"><number>0</number></property>
@@ -2449,64 +2521,153 @@
                      </item>
                     </layout>
                    </widget>
-                  </item>
-                   <item row="1" column="0" colspan="2"><widget class="QCheckBox" name="readbackLinearImagesCheckBox"><property name="text"><string>Enable Readback Linear Images</string></property></widget></item>
-                   <item row="2" column="0" colspan="2"><widget class="QCheckBox" name="dmaCheckBox"><property name="text"><string>Enable Direct Memory Access</string></property></widget></item>
-                   <item row="3" column="0" colspan="2">
-                    <widget class="QCheckBox" name="nvRawAccessChainsCheckBox">
-                     <property name="text"><string>NVIDIA Raw Access Chains</string></property>
-                     <property name="toolTip"><string>Optimize storage buffer shader accesses on supported NVIDIA drivers. Takes effect when the game starts.</string></property>
-                    </widget>
-                   </item>
-                   <item row="4" column="0" colspan="2">
+</item>
+<item>
+                   <widget class="QCheckBox" name="readbackLinearImagesCheckBox"><property name="text"><string>Enable Readback Linear Images</string></property></widget>
+</item>
+<item>
+                   <widget class="QCheckBox" name="dmaCheckBox"><property name="text"><string>Enable Direct Memory Access</string></property></widget>
+</item>
+</layout>
+</widget>
+</item>
+<item><spacer name="experimentalColumn1Spacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+</layout>
+</item>
+<item>
+<layout class="QVBoxLayout" name="experimentalColumn2">
+<item>
+<widget class="QGroupBox" name="shaderCompilerGroupBox">
+<property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+<property name="title"><string>Shader Compiler</string></property>
+<layout class="QVBoxLayout" name="shaderCompilerGroupBoxLayout">
+<property name="spacing"><number>6</number></property>
+<property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+<item>
+                   <widget class="QCheckBox" name="shaderCaheCheckBox"><property name="text"><string>Enable Shader Cache</string></property></widget>
+</item>
+<item>
+                   <widget class="QCheckBox" name="shaderCacheArchiveCheckBox"><property name="text"><string>Compress the Shader Cache files into a zip file</string></property></widget>
+</item>
+<item>
+                   <widget class="QCheckBox" name="asyncShaderRecompilingCheckBox"><property name="text"><string>Async Shader Recompiling</string></property></widget>
+</item>
+<item>
                     <widget class="QCheckBox" name="uniformBufferShadersCheckBox">
                      <property name="text"><string>Force UBO Shaders</string></property>
-                     <property name="toolTip"><string>Use uniform buffers for all eligible read-only shader buffers. May improve GPU performance or increase CPU cost. Takes effect when the game starts.</string></property>
                     </widget>
-                   </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                 <widget class="QGroupBox" name="drawCallsGroupBox">
-                  <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                  <property name="title"><string>Draw Calls</string></property>
-                  <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                  <layout class="QFormLayout" name="drawCallsLayout">
-                   <property name="sizeConstraint"><enum>QLayout::SizeConstraint::SetDefaultConstraint</enum></property>
-                   <property name="fieldGrowthPolicy"><enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum></property>
-                   <property name="labelAlignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set></property>
-                   <property name="horizontalSpacing"><number>6</number></property><property name="verticalSpacing"><number>6</number></property>
-                   <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                   <item row="0" column="0" colspan="2"><widget class="QCheckBox" name="enablePredicationCheckBox"><property name="text"><string>Enable Predication Handling</string></property></widget></item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                 <widget class="QGroupBox" name="shaderCacheGroupBox">
-                  <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                  <property name="title"><string>Shader Cache</string></property>
-                  <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                  <layout class="QFormLayout" name="shaderCacheLayout">
-                   <property name="sizeConstraint"><enum>QLayout::SizeConstraint::SetDefaultConstraint</enum></property>
-                   <property name="fieldGrowthPolicy"><enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum></property>
-                   <property name="labelAlignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set></property>
-                   <property name="horizontalSpacing"><number>6</number></property><property name="verticalSpacing"><number>6</number></property>
-                   <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                   <item row="0" column="0" colspan="2"><widget class="QCheckBox" name="shaderCaheCheckBox"><property name="text"><string>Enable Shader Cache</string></property></widget></item>
-                   <item row="1" column="0" colspan="2"><widget class="QCheckBox" name="shaderCacheArchiveCheckBox"><property name="text"><string>Compress the Shader Cache files into a zip file</string></property></widget></item>
-                   <item row="2" column="0" colspan="2"><widget class="QCheckBox" name="asyncShaderRecompilingCheckBox"><property name="text"><string>Async Shader Recompiling</string></property></widget></item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                 <widget class="QGroupBox" name="hddReadSpeedGroupBox">
-                  <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                  <property name="title"><string>HDD Read Speed</string></property>
-                  <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                  <layout class="QVBoxLayout" name="hddReadSpeedLayout">
-                   <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                   <item>
+</item>
+<item>
+                    <widget class="QCheckBox" name="nvRawAccessChainsCheckBox">
+                     <property name="text"><string>Raw Access Chains</string></property>
+                    </widget>
+</item>
+</layout>
+</widget>
+</item>
+<item>
+<widget class="QGroupBox" name="commandProcessorGroupBox">
+<property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+<property name="title"><string>Command Processor</string></property>
+<layout class="QVBoxLayout" name="commandProcessorGroupBoxLayout">
+<property name="spacing"><number>6</number></property>
+<property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+<item>
+                   <widget class="QCheckBox" name="enablePredicationCheckBox"><property name="text"><string>Enable Predication Handling</string></property></widget>
+</item>
+</layout>
+</widget>
+</item>
+<item><spacer name="experimentalColumn2Spacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+</layout>
+</item>
+<item>
+<layout class="QVBoxLayout" name="experimentalColumn3">
+<item>
+<widget class="QGroupBox" name="videoOutGroupBox">
+<property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+<property name="title"><string>Video Out</string></property>
+<layout class="QVBoxLayout" name="videoOutGroupBoxLayout">
+<property name="spacing"><number>6</number></property>
+<property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+<item>
+                <widget class="QGroupBox" name="heightDivider">
+                 <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+                <property name="title">
+                 <string>Vblank Frequency</string>
+                 </property>
+                 <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
+                 <layout class="QVBoxLayout" name="vblankLayout">
+                  <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+                 <item>
+                  <widget class="QSpinBox" name="vblankSpinBox">
+                   <property name="frame">
+                    <bool>true</bool>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+                   </property>
+                   <property name="specialValueText">
+                    <string/>
+                   </property>
+                   <property name="accelerated">
+                    <bool>true</bool>
+                   </property>
+                   <property name="correctionMode">
+                    <enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum>
+                   </property>
+                   <property name="keyboardTracking">
+                    <bool>false</bool>
+                   </property>
+                   <property name="suffix">
+                    <string notr="true">Hz</string>
+                   </property>
+                   <property name="minimum">
+                    <number>60</number>
+                   </property>
+                   <property name="maximum">
+                    <number>9999</number>
+                   </property>
+                   <property name="value">
+                    <number>60</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+</item>
+<item>
+                <widget class="QGroupBox" name="gpuFramesAheadGroupBox">
+                 <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+                 <property name="title"><string>GPU Frames Ahead</string></property>
+                 <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
+                 <layout class="QVBoxLayout" name="gpuFramesAheadLayout">
+                  <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+                 <item>
+                  <widget class="QComboBox" name="gpuFramesAheadComboBox">
+                   <item><property name="text"><string notr="true">0</string></property></item>
+                   <item><property name="text"><string notr="true">1</string></property></item>
+                   <item><property name="text"><string notr="true">2</string></property></item>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+</item>
+</layout>
+</widget>
+</item>
+<item>
+<widget class="QGroupBox" name="storageGroupBox">
+<property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+<property name="title"><string>Storage</string></property>
+<layout class="QVBoxLayout" name="storageGroupBoxLayout">
+<property name="spacing"><number>6</number></property>
+<property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+<item>
+<widget class="QGroupBox" name="hddReadSpeedGroupBox">
+<property name="title"><string>HDD Read Speed</string></property>
+<layout class="QVBoxLayout" name="hddReadSpeedLayout">
+<item>
                     <widget class="QSpinBox" name="hddReadSpeedSpinBox">
                      <property name="accelerated"><bool>true</bool></property>
                      <property name="correctionMode"><enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum></property>
@@ -2515,18 +2676,41 @@
                      <property name="suffix"><string notr="true"> MiB/s</string></property>
                      <property name="maximum"><number>100000</number></property>
                     </widget>
-                   </item>
-                   <item>
+</item>
+</layout>
+</widget>
+</item>
+<item>
                     <widget class="QCheckBox" name="app0DisableTimeStretchingCheckBox">
                      <property name="text"><string>Disable Time Dilation</string></property>
                     </widget>
-                   </item>
-                  </layout>
-                 </widget>
-               </item>
-               <item><spacer name="renderingGroupsSpacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
-              </layout>
-             </item>
+</item>
+</layout>
+</widget>
+</item>
+<item>
+<widget class="QGroupBox" name="consoleGroupBox">
+<property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
+<property name="title"><string>Console</string></property>
+<layout class="QVBoxLayout" name="consoleGroupBoxLayout">
+<property name="spacing"><number>6</number></property>
+<property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
+<item>
+               <widget class="QCheckBox" name="neoCheckBox">
+                <property name="text"><string>Enable PS4 Neo Mode</string></property>
+               </widget>
+</item>
+<item>
+               <widget class="QCheckBox" name="devkitCheckBox">
+                <property name="text"><string>Enable Devkit Console Mode</string></property>
+               </widget>
+</item>
+</layout>
+</widget>
+</item>
+<item><spacer name="experimentalColumn3Spacer"><property name="orientation"><enum>Qt::Orientation::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item>
+</layout>
+</item>
             <item>
              <widget class="QGroupBox" name="shadnetGroupBox">
               <property name="sizePolicy">
@@ -2642,161 +2826,6 @@
                 <widget class="QLineEdit" name="servWebApiLineEdit"/>
                </item>
               </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QGroupBox" name="systemCompatibilityGroupBox">
-              <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-              <property name="title"><string>System and Compatibility</string></property>
-              <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-               <layout class="QVBoxLayout" name="verticalLayout_10">
-               <property name="spacing"><number>6</number></property>
-               <property name="leftMargin"><number>9</number></property>
-               <property name="topMargin"><number>0</number></property>
-               <property name="bottomMargin"><number>12</number></property>
-              <item>
-               <widget class="QCheckBox" name="devkitCheckBox">
-                <property name="text"><string>Enable Devkit Console Mode</string></property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="neoCheckBox">
-                <property name="text"><string>Enable PS4 Neo Mode</string></property>
-               </widget>
-              </item>
-              <item>
-                <widget class="QGroupBox" name="gpuFramesAheadGroupBox">
-                 <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                 <property name="title"><string>GPU Frames Ahead</string></property>
-                 <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                 <layout class="QVBoxLayout" name="gpuFramesAheadLayout">
-                  <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                 <item>
-                  <widget class="QComboBox" name="gpuFramesAheadComboBox">
-                   <item><property name="text"><string notr="true">0</string></property></item>
-                   <item><property name="text"><string notr="true">1</string></property></item>
-                   <item><property name="text"><string notr="true">2</string></property></item>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-                <widget class="QGroupBox" name="dmemGroupBox">
-                 <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                <property name="title">
-                 <string>Additional DMem Allocation</string>
-                 </property>
-                 <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                 <layout class="QVBoxLayout" name="verticalLayout_4">
-                  <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                 <item>
-                  <widget class="QSpinBox" name="dmemSpinBox">
-                   <property name="frame">
-                    <bool>true</bool>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-                   </property>
-                   <property name="specialValueText">
-                    <string/>
-                   </property>
-                   <property name="accelerated">
-                    <bool>true</bool>
-                   </property>
-                   <property name="correctionMode">
-                    <enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum>
-                   </property>
-                   <property name="keyboardTracking">
-                    <bool>false</bool>
-                   </property>
-                   <property name="suffix">
-                    <string notr="true">MB</string>
-                   </property>
-                   <property name="minimum">
-                    <number>0</number>
-                   </property>
-                   <property name="maximum">
-                    <number>100000</number>
-                   </property>
-                   <property name="value">
-                    <number>0</number>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-                <widget class="QGroupBox" name="heightDivider">
-                 <property name="sizePolicy"><sizepolicy hsizetype="Preferred" vsizetype="Minimum"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy></property>
-                <property name="title">
-                 <string>Vblank Frequency</string>
-                 </property>
-                 <property name="alignment"><set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set></property>
-                 <layout class="QVBoxLayout" name="vblankLayout">
-                  <property name="leftMargin"><number>9</number></property><property name="topMargin"><number>0</number></property><property name="bottomMargin"><number>12</number></property>
-                 <item>
-                  <widget class="QSpinBox" name="vblankSpinBox">
-                   <property name="frame">
-                    <bool>true</bool>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-                   </property>
-                   <property name="specialValueText">
-                    <string/>
-                   </property>
-                   <property name="accelerated">
-                    <bool>true</bool>
-                   </property>
-                   <property name="correctionMode">
-                    <enum>QAbstractSpinBox::CorrectionMode::CorrectToNearestValue</enum>
-                   </property>
-                   <property name="keyboardTracking">
-                    <bool>false</bool>
-                   </property>
-                   <property name="suffix">
-                    <string notr="true">Hz</string>
-                   </property>
-                   <property name="minimum">
-                    <number>60</number>
-                   </property>
-                   <property name="maximum">
-                    <number>9999</number>
-                   </property>
-                   <property name="value">
-                    <number>60</number>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="redZoneGroupBox">
-                <property name="title">
-                 <string>Red Zone Protection</string>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout_20">
-                 <item>
-                  <widget class="QComboBox" name="redZoneComboBox">
-                   <item>
-                    <property name="text">
-                     <string>Disabled</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Static Patching</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
              </widget>
             </item>
            </layout>

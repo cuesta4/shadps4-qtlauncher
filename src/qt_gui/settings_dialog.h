@@ -50,6 +50,7 @@ private:
     void VolumeSliderChange(int value);
     void PollSDLevents();
     void GetPhysicalDevices();
+    void UpdateNvidiaOnlyOptions();
     void SaveSettings();
     void RefreshAudioDevices();
 
